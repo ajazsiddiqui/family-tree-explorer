@@ -105,8 +105,9 @@ function Index() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleAddRoot}
+              onClick={() => setAdding((v) => !v)}
               className="text-xs rounded-full bg-primary text-primary-foreground px-3 py-1.5 hover:opacity-90 transition"
+              data-testid="add-member-toggle"
             >
               + Add member
             </button>
@@ -134,13 +135,41 @@ function Index() {
               }}
             />
             <button
-              onClick={handleReset}
+              onClick={() => setConfirmingReset(true)}
               className="text-xs rounded-full border border-border px-3 py-1.5 hover:bg-muted transition text-muted-foreground"
             >
               Reset
             </button>
           </div>
         </div>
+        {adding && (
+          <div className="max-w-7xl mx-auto px-6 pb-3">
+            <form onSubmit={submitAdd} className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="New member name"
+                className="flex-1 max-w-sm rounded-full border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                maxLength={120}
+                data-testid="new-member-name"
+              />
+              <button type="submit" className="text-xs rounded-full bg-primary text-primary-foreground px-4 py-2 hover:opacity-90 transition">Create</button>
+              <button type="button" onClick={() => { setAdding(false); setNewName(""); }} className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition">Cancel</button>
+            </form>
+          </div>
+        )}
+        {confirmingReset && (
+          <div className="max-w-7xl mx-auto px-6 pb-3">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-4 py-2">
+              <span className="text-sm">Reset to seed data? Your edits will be lost.</span>
+              <div className="flex items-center gap-2">
+                <button onClick={doReset} className="text-xs rounded-full bg-destructive text-destructive-foreground px-4 py-2 hover:opacity-90 transition">Confirm reset</button>
+                <button onClick={() => setConfirmingReset(false)} className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
         {msg && (
           <div className="max-w-7xl mx-auto px-6 pb-2 text-xs text-muted-foreground">
             {msg}
