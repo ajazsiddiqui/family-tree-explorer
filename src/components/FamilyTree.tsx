@@ -34,7 +34,7 @@ function NodeView({
       </div>
 
       {node.children.length > 0 && (
-        <ul className="tree-children flex justify-center pt-7 mt-3 relative">
+        <ul className="tree-children flex justify-center pt-12 mt-8 relative">
           {node.children.map((c) => (
             <NodeView
               key={c.member.id}
@@ -131,18 +131,18 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children::before {
           content: "";
           position: absolute;
-          top: 0;
+          top: -32px;
           left: 50%;
           width: 2px;
-          height: 22px;
-          background: linear-gradient(180deg, var(--branch), transparent);
+          height: 32px;
+          background: linear-gradient(180deg, transparent, var(--branch));
           transform: translateX(-50%);
           border-radius: 2px;
         }
         .tree-children > li::before {
           content: "";
           position: absolute;
-          top: -6px;
+          top: -20px;
           left: 0;
           right: 0;
           height: 2px;
@@ -162,10 +162,10 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children > li::after {
           content: "";
           position: absolute;
-          top: -6px;
+          top: -20px;
           left: 50%;
           width: 2px;
-          height: 14px;
+          height: 20px;
           background: var(--branch);
           transform: translateX(-50%);
           border-radius: 2px;
