@@ -157,6 +157,13 @@ export function FamilyTree({ nodes, highlightId }: Props) {
   );
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [manualScale, setManualScale] = useState<number | null>(null);
+
+  const zoomIn = () => setManualScale((s) => Math.min(2, (s ?? scale) + 0.1));
+  const zoomOut = () => setManualScale((s) => Math.max(0.3, (s ?? scale) - 0.1));
+  const zoomReset = () => setManualScale(null);
+
+  const effectiveScale = manualScale ?? scale;
 
   const toggle = (id: string) =>
     setExpanded((s) => {
