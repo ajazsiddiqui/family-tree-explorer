@@ -8,7 +8,6 @@ interface Props {
   spouse?: FamilyMember;
   expanded?: boolean;
   onToggle?: () => void;
-  compact?: boolean;
 }
 
 function Avatar({ member, size = 56 }: { member: FamilyMember; size?: number }) {
@@ -21,13 +20,12 @@ function Avatar({ member, size = 56 }: { member: FamilyMember; size?: number }) 
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-full bg-gradient-to-br from-muted to-background ring-2 font-semibold text-foreground/80 shrink-0",
+        "flex items-center justify-center rounded-full bg-gradient-to-br from-secondary/60 via-background to-accent/40 ring-2 font-semibold text-foreground/80 shrink-0 shadow-sm",
         ring,
       )}
-      style={{ width: size, height: size, fontSize: size * 0.32 }}
+      style={{ width: size, height: size, fontSize: size * 0.34 }}
     >
       {member.photo ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={member.photo}
           alt={member.name}
@@ -40,26 +38,25 @@ function Avatar({ member, size = 56 }: { member: FamilyMember; size?: number }) 
   );
 }
 
-export function MemberCard({ member, spouse, expanded, onToggle, compact }: Props) {
+export function MemberCard({ member, spouse, expanded, onToggle }: Props) {
   const age = ageOf(member);
   return (
     <div
       className={cn(
-        "group relative rounded-2xl border border-border bg-[var(--gradient-card)] shadow-[var(--shadow-soft)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-pop)]",
-        expanded ? "ring-2 ring-primary/40" : "",
-        compact ? "p-2.5" : "p-3.5",
+        "group relative rounded-2xl border bg-[var(--gradient-card)] shadow-[var(--shadow-soft)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-pop)] p-3 flex flex-col items-center text-center",
+        expanded ? "border-primary/50 ring-2 ring-primary/30" : "border-border",
       )}
     >
       <button
         onClick={onToggle}
-        className="flex items-center gap-3 w-full text-left"
+        className="flex flex-col items-center gap-2 w-full"
       >
-        <Avatar member={member} size={compact ? 44 : 52} />
-        <div className="min-w-0 flex-1">
-          <div className="font-semibold text-sm text-foreground truncate">
+        <Avatar member={member} size={64} />
+        <div className="min-w-0 w-full">
+          <div className="font-semibold text-sm text-foreground truncate leading-tight">
             {member.name}
           </div>
-          <div className="text-[11px] text-muted-foreground truncate">
+          <div className="text-[10px] text-muted-foreground truncate mt-0.5">
             {member.occupation ?? "—"}
             {age !== null && ` · ${age}y`}
           </div>
@@ -67,24 +64,26 @@ export function MemberCard({ member, spouse, expanded, onToggle, compact }: Prop
       </button>
 
       {expanded && (
-        <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-1">
+        <div className="mt-3 space-y-2 w-full animate-in fade-in slide-in-from-top-1">
           {spouse && (
-            <div className="flex items-center gap-2 rounded-xl bg-secondary/40 px-2 py-1.5">
-              <Avatar member={spouse} size={32} />
+            <div className="flex items-center gap-2 rounded-xl bg-secondary/50 px-2 py-1.5 text-left">
+              <Avatar member={spouse} size={28} />
               <div className="min-w-0">
-                <div className="text-xs font-medium truncate">{spouse.name}</div>
-                <div className="text-[10px] text-muted-foreground">spouse</div>
+                <div className="text-[11px] font-medium truncate">{spouse.name}</div>
+                <div className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                  spouse
+                </div>
               </div>
             </div>
           )}
-          <div className="text-[11px] text-muted-foreground space-y-0.5">
+          <div className="text-[10px] text-muted-foreground space-y-0.5 text-left">
             {member.dob && <div>🎂 {member.dob}</div>}
-            {member.birthPlace && <div>📍 {member.birthPlace}</div>}
+            {member.birthPlace && <div className="truncate">📍 {member.birthPlace}</div>}
           </div>
           <Link
             to="/member/$id"
             params={{ id: member.id }}
-            className="inline-flex items-center justify-center w-full rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center justify-center w-full rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             View details →
           </Link>
