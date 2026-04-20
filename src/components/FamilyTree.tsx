@@ -164,20 +164,20 @@ export function FamilyTree({ nodes, highlightId }: Props) {
       return n;
     });
 
+  const isExpanded = (id: string) => expanded.has(id);
+
   // layout the forest horizontally
   let xCursor = 0;
   const positions: PositionedNode[] = [];
   for (const root of nodes) {
     const w = subtreeWidth(root);
-    const p = layoutAt(root, xCursor, 0);
-    collectAll(p, positions);
+    const p = layoutAt(root, xCursor, 0, isExpanded);
+    collectAll(p, isExpanded, positions);
     xCursor += w + SIBLING_GAP * 4;
   }
   const totalW = xCursor - SIBLING_GAP * 4;
   const totalH = Math.max(
-    ...positions.map(
-      (p) => p.y + 180 + (expanded.has(p.node.member.id) || (p.node.spouse && expanded.has(p.node.spouse.id)) ? 110 : 0),
-    ),
+    ...positions.map((p) => p.y + nodeHeight(p.node, isExpanded) + 20),
   );
 
   // auto-fit
@@ -204,9 +204,10 @@ export function FamilyTree({ nodes, highlightId }: Props) {
   const connectors: { d: string; key: string }[] = [];
   for (const p of positions) {
     if (p.node.children.length === 0) continue;
-    const parentBottomY = p.y + 130; // bottom of pair
-    const busY = p.y + 180 + ROW_GAP / 2; // mid of gap
-    const childTopY = p.y + 180 + ROW_GAP;
+    const h = nodeHeight(p.node, isExpanded);
+    const parentBottomY = p.y + h;
+    const busY = p.y + h + ROW_GAP / 2;
+    const childTopY = p.y + h + ROW_GAP;
 
     // trunk down from parent center to bus
     connectors.push({
