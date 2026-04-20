@@ -78,7 +78,7 @@ function NodeView({
         onAnyToggle={onAnyToggle}
       />
       {node.children.length > 0 && (
-        <ul className="tree-children flex justify-center mt-[120px] relative">
+        <ul className="tree-children flex justify-center mt-[150px] relative">
           {node.children.map((c, i) => (
             <NodeView
               key={c.member.id}
@@ -177,10 +177,10 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children::before {
           content: "";
           position: absolute;
-          top: -56px;
+          top: -80px;
           left: 50%;
           width: 2.5px;
-          height: 56px;
+          height: 80px;
           background: var(--branch);
           transform: translateX(-50%);
           border-radius: 4px;
@@ -189,7 +189,7 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children > li::before {
           content: "";
           position: absolute;
-          top: -32px;
+          top: -50px;
           left: 0;
           right: 0;
           height: 2.5px;
@@ -214,10 +214,10 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children > li::after {
           content: "";
           position: absolute;
-          top: -32px;
+          top: -50px;
           left: 50%;
           width: 2.5px;
-          height: 32px;
+          height: 50px;
           background: var(--branch);
           transform: translateX(-50%);
           border-radius: 4px;
