@@ -12,6 +12,8 @@ export interface FamilyMember {
   dom?: string; // date of marriage (optional)
   birthPlace?: string;
   occupation?: string;
+  profession?: string;
+  voterId?: string;
   bio?: string;
   photo?: string; // URL or emoji
   fatherId?: string;
