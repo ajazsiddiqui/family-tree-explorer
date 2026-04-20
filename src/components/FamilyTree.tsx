@@ -7,38 +7,79 @@ interface Props {
   highlightId?: string;
 }
 
-function NodeView({
+/** A pair = the member + (optionally) their spouse, displayed side-by-side. */
+function CouplePair({
   node,
+  tint,
   highlightId,
   onAnyToggle,
 }: {
   node: TreeNode;
+  tint: number;
   highlightId?: string;
   onAnyToggle: () => void;
 }) {
-  const [expanded, setExpanded] = useState(highlightId === node.member.id);
+  const [exp1, setExp1] = useState(highlightId === node.member.id);
+  const [exp2, setExp2] = useState(highlightId === node.spouse?.id);
 
   return (
-    <li className="relative flex flex-col items-center px-2">
-      <div className="w-[180px]">
-        <MemberCard
-          member={node.member}
-          spouse={node.spouse}
-          expanded={expanded}
-          onToggle={() => {
-            setExpanded((e) => !e);
-            // defer so DOM updates first
-            requestAnimationFrame(onAnyToggle);
-          }}
-        />
-      </div>
+    <div className="relative inline-flex items-start gap-1 px-1">
+      <MemberCard
+        member={node.member}
+        tint={tint}
+        expanded={exp1}
+        onToggle={() => {
+          setExp1((e) => !e);
+          requestAnimationFrame(onAnyToggle);
+        }}
+      />
+      {node.spouse && (
+        <>
+          {/* heart connector between spouses */}
+          <div className="self-center -mx-1 z-10 w-5 h-5 rounded-full bg-white ring-2 ring-[var(--branch-soft)] flex items-center justify-center text-[10px] mt-12">
+            ♥
+          </div>
+          <MemberCard
+            member={node.spouse}
+            tint={tint}
+            expanded={exp2}
+            onToggle={() => {
+              setExp2((e) => !e);
+              requestAnimationFrame(onAnyToggle);
+            }}
+          />
+        </>
+      )}
+    </div>
+  );
+}
 
+function NodeView({
+  node,
+  tint,
+  highlightId,
+  onAnyToggle,
+}: {
+  node: TreeNode;
+  tint: number;
+  highlightId?: string;
+  onAnyToggle: () => void;
+}) {
+  return (
+    <li className="relative flex flex-col items-center px-3">
+      <CouplePair
+        node={node}
+        tint={tint}
+        highlightId={highlightId}
+        onAnyToggle={onAnyToggle}
+      />
       {node.children.length > 0 && (
-        <ul className="tree-children flex justify-center pt-12 mt-8 relative">
-          {node.children.map((c) => (
+        <ul className="tree-children flex justify-center pt-12 mt-10 relative">
+          {node.children.map((c, i) => (
             <NodeView
               key={c.member.id}
               node={c}
+              tint={((tint + i) % 6) + 1}
               highlightId={highlightId}
               onAnyToggle={onAnyToggle}
             />
@@ -58,7 +99,6 @@ export function FamilyTree({ nodes, highlightId }: Props) {
     const wrap = wrapperRef.current;
     const inner = innerRef.current;
     if (!wrap || !inner) return;
-    // measure natural size at scale 1
     inner.style.transform = "scale(1)";
     const naturalW = inner.scrollWidth;
     const naturalH = inner.scrollHeight;
@@ -84,13 +124,13 @@ export function FamilyTree({ nodes, highlightId }: Props) {
     <div
       ref={wrapperRef}
       className="relative rounded-3xl bg-[var(--gradient-soft)] border border-border shadow-[var(--shadow-soft)] overflow-hidden"
-      style={{ minHeight: 480 }}
+      style={{ minHeight: 520 }}
     >
-      {/* decorative glow */}
-      <div className="pointer-events-none absolute inset-0 opacity-60"
+      <div
+        className="pointer-events-none absolute inset-0 opacity-50"
         style={{
           background:
-            "radial-gradient(circle at 20% 0%, oklch(0.95 0.06 200 / 0.6), transparent 50%), radial-gradient(circle at 80% 100%, oklch(0.95 0.06 340 / 0.5), transparent 50%)",
+            "radial-gradient(circle at 20% 0%, oklch(0.95 0.06 60 / 0.5), transparent 55%), radial-gradient(circle at 80% 100%, oklch(0.95 0.06 200 / 0.4), transparent 55%)",
         }}
       />
       <div className="relative p-6 flex justify-center items-start overflow-auto">
@@ -103,10 +143,11 @@ export function FamilyTree({ nodes, highlightId }: Props) {
           }}
         >
           <ul className="tree-root inline-flex justify-center">
-            {nodes.map((n) => (
+            {nodes.map((n, i) => (
               <NodeView
                 key={n.member.id}
                 node={n}
+                tint={i + 1}
                 highlightId={highlightId}
                 onAnyToggle={fit}
               />
@@ -128,26 +169,28 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children > li {
           position: relative;
         }
+        /* trunk down from parent */
         .tree-children::before {
           content: "";
           position: absolute;
-          top: -32px;
+          top: -40px;
           left: 50%;
-          width: 2px;
-          height: 32px;
-          background: linear-gradient(180deg, transparent, var(--branch));
+          width: 2.5px;
+          height: 40px;
+          background: var(--branch);
           transform: translateX(-50%);
-          border-radius: 2px;
+          border-radius: 4px;
         }
+        /* horizontal bus across siblings */
         .tree-children > li::before {
           content: "";
           position: absolute;
-          top: -20px;
+          top: -24px;
           left: 0;
           right: 0;
-          height: 2px;
+          height: 2.5px;
           background: var(--branch);
-          border-radius: 2px;
+          border-radius: 4px;
         }
         .tree-children > li:only-child::before {
           left: 50%;
@@ -155,20 +198,25 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         }
         .tree-children > li:first-child::before {
           left: 50%;
+          border-top-left-radius: 12px;
+          border-bottom-left-radius: 12px;
         }
         .tree-children > li:last-child::before {
           right: 50%;
+          border-top-right-radius: 12px;
+          border-bottom-right-radius: 12px;
         }
+        /* drop from bus into each child */
         .tree-children > li::after {
           content: "";
           position: absolute;
-          top: -20px;
+          top: -24px;
           left: 50%;
-          width: 2px;
-          height: 20px;
+          width: 2.5px;
+          height: 24px;
           background: var(--branch);
           transform: translateX(-50%);
-          border-radius: 2px;
+          border-radius: 4px;
         }
       `}</style>
     </div>
