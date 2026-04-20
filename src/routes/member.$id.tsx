@@ -1,5 +1,6 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { family } from "@/data/family";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import type { FamilyMember, Gender } from "@/data/family";
 import {
   findMember,
   getChildren,
@@ -10,23 +11,17 @@ import {
   initials,
   generationOf,
 } from "@/lib/family-tree";
+import { useFamily, familyStore, newId } from "@/lib/family-store";
 
 export const Route = createFileRoute("/member/$id")({
-  loader: ({ params }) => {
-    const member = findMember(family, params.id);
-    if (!member) throw notFound();
-    return { member };
-  },
-  head: ({ loaderData }) => ({
-    meta: loaderData
-      ? [
-          { title: `${loaderData.member.name} — Family Tree` },
-          {
-            name: "description",
-            content: `Profile of ${loaderData.member.name} in our family tree.`,
-          },
-        ]
-      : [],
+  head: ({ params }) => ({
+    meta: [
+      { title: `Member — Family Tree` },
+      {
+        name: "description",
+        content: `Profile of family member ${params.id}.`,
+      },
+    ],
   }),
   notFoundComponent: () => (
     <div className="min-h-screen flex items-center justify-center">
@@ -73,12 +68,53 @@ function NavCard({
 }
 
 function MemberDetail() {
-  const { member } = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const family = useFamily();
+  const navigate = useNavigate();
+  const member = findMember(family, id);
+  const [editing, setEditing] = useState(false);
+
+  if (!member) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Member not found</h1>
+          <Link to="/" className="text-primary underline mt-2 inline-block">
+            Back to tree
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const { father, mother } = getParents(family, member);
   const spouse = getSpouse(family, member);
   const children = getChildren(family, member.id);
   const age = ageOf(member);
   const gen = generationOf(family, member.id);
+
+  const handleDelete = () => {
+    if (!confirm(`Delete ${member.name}? This cannot be undone.`)) return;
+    familyStore.remove(member.id);
+    navigate({ to: "/" });
+  };
+
+  const handleAddChild = () => {
+    const name = prompt(`Add child of ${member.name}. Name?`);
+    if (!name?.trim()) return;
+    const childId = newId("c");
+    const fatherId = member.gender === "male" ? member.id : spouse?.gender === "male" ? spouse.id : member.id;
+    const motherId = member.gender === "female" ? member.id : spouse?.gender === "female" ? spouse.id : undefined;
+    familyStore.upsert({
+      id: childId,
+      name: name.trim(),
+      gender: "other",
+      alive: true,
+      fatherId,
+      motherId,
+    });
+    navigate({ to: "/member/$id", params: { id: childId } });
+  };
 
   return (
     <div className="min-h-screen bg-[var(--gradient-soft)]">
@@ -90,8 +126,26 @@ function MemberDetail() {
           >
             ← Family tree
           </Link>
-          <div className="text-xs text-muted-foreground">
-            Generation {gen}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setEditing((v) => !v)}
+              className="text-xs rounded-full border border-border px-3 py-1.5 hover:bg-muted transition"
+            >
+              {editing ? "Close" : "Edit"}
+            </button>
+            <button
+              onClick={handleAddChild}
+              className="text-xs rounded-full border border-border px-3 py-1.5 hover:bg-muted transition"
+            >
+              + Child
+            </button>
+            <button
+              onClick={handleDelete}
+              className="text-xs rounded-full border border-destructive/40 text-destructive px-3 py-1.5 hover:bg-destructive/10 transition"
+            >
+              Delete
+            </button>
+            <div className="text-xs text-muted-foreground ml-2">Gen {gen}</div>
           </div>
         </div>
       </header>
@@ -123,31 +177,40 @@ function MemberDetail() {
           </div>
         </section>
 
-        <section className="grid sm:grid-cols-2 gap-3 mt-6">
-          {[
-            { label: "Father's name", value: father?.name ?? "—" },
-            { label: "Mother's name", value: mother?.name ?? "—" },
-            { label: "Date of birth", value: formatDate(member.dob) },
-            { label: "Birth place", value: member.birthPlace ?? "—" },
-            { label: "Date of marriage", value: formatDate(member.dom) },
-            { label: "Spouse", value: spouse?.name ?? "—" },
-            { label: "Profession", value: member.profession ?? member.occupation ?? "—" },
-            { label: "Voter ID", value: member.voterId ?? "—" },
-            ...(member.dod
-              ? [{ label: "Date of passing", value: formatDate(member.dod) }]
-              : []),
-          ].map((row) => (
-            <div
-              key={row.label}
-              className="rounded-2xl border border-border bg-card px-4 py-3"
-            >
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {row.label}
+        {editing ? (
+          <EditForm
+            key={member.id}
+            member={member}
+            family={family}
+            onClose={() => setEditing(false)}
+          />
+        ) : (
+          <section className="grid sm:grid-cols-2 gap-3 mt-6">
+            {[
+              { label: "Father's name", value: father?.name ?? "—" },
+              { label: "Mother's name", value: mother?.name ?? "—" },
+              { label: "Date of birth", value: formatDate(member.dob) },
+              { label: "Birth place", value: member.birthPlace ?? "—" },
+              { label: "Date of marriage", value: formatDate(member.dom) },
+              { label: "Spouse", value: spouse?.name ?? "—" },
+              { label: "Profession", value: member.profession ?? member.occupation ?? "—" },
+              { label: "Voter ID", value: member.voterId ?? "—" },
+              ...(member.dod
+                ? [{ label: "Date of passing", value: formatDate(member.dod) }]
+                : []),
+            ].map((row) => (
+              <div
+                key={row.label}
+                className="rounded-2xl border border-border bg-card px-4 py-3"
+              >
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {row.label}
+                </div>
+                <div className="text-sm font-medium mt-0.5">{row.value}</div>
               </div>
-              <div className="text-sm font-medium mt-0.5">{row.value}</div>
-            </div>
-          ))}
-        </section>
+            ))}
+          </section>
+        )}
 
         {/* Navigation: up (parents/spouse) and down (children) */}
         <section className="mt-8 space-y-4">
@@ -179,5 +242,177 @@ function MemberDetail() {
         </section>
       </main>
     </div>
+  );
+}
+
+function EditForm({
+  member,
+  family,
+  onClose,
+}: {
+  member: FamilyMember;
+  family: FamilyMember[];
+  onClose: () => void;
+}) {
+  const [form, setForm] = useState<FamilyMember>({ ...member });
+  const candidates = useMemo(
+    () => family.filter((m) => m.id !== member.id),
+    [family, member.id],
+  );
+
+  const set = <K extends keyof FamilyMember>(k: K, v: FamilyMember[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim()) return alert("Name is required.");
+    const cleaned: FamilyMember = {
+      ...form,
+      name: form.name.trim(),
+      dob: form.dob || undefined,
+      dod: form.dod || undefined,
+      dom: form.dom || undefined,
+      birthPlace: form.birthPlace?.trim() || undefined,
+      occupation: form.occupation?.trim() || undefined,
+      profession: form.profession?.trim() || undefined,
+      voterId: form.voterId?.trim() || undefined,
+      bio: form.bio?.trim() || undefined,
+      photo: form.photo?.trim() || undefined,
+      fatherId: form.fatherId || undefined,
+      motherId: form.motherId || undefined,
+      spouseId: form.spouseId || undefined,
+    };
+    familyStore.upsert(cleaned);
+    // sync spouse link explicitly (covers clearing previous spouse)
+    if (cleaned.spouseId !== member.spouseId) {
+      familyStore.linkSpouse(cleaned.id, cleaned.spouseId);
+    }
+    onClose();
+  };
+
+  return (
+    <form
+      onSubmit={handleSave}
+      className="mt-6 rounded-2xl border border-border bg-card p-5 space-y-4"
+    >
+      <div className="grid sm:grid-cols-2 gap-3">
+        <Field label="Name *">
+          <input
+            value={form.name}
+            onChange={(e) => set("name", e.target.value)}
+            className={inputCls}
+            maxLength={120}
+            required
+          />
+        </Field>
+        <Field label="Gender">
+          <select
+            value={form.gender}
+            onChange={(e) => set("gender", e.target.value as Gender)}
+            className={inputCls}
+          >
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </Field>
+        <Field label="Date of birth">
+          <input type="date" value={form.dob ?? ""} onChange={(e) => set("dob", e.target.value)} className={inputCls} />
+        </Field>
+        <Field label="Date of passing">
+          <input type="date" value={form.dod ?? ""} onChange={(e) => set("dod", e.target.value)} className={inputCls} />
+        </Field>
+        <Field label="Date of marriage">
+          <input type="date" value={form.dom ?? ""} onChange={(e) => set("dom", e.target.value)} className={inputCls} />
+        </Field>
+        <Field label="Birth place">
+          <input value={form.birthPlace ?? ""} onChange={(e) => set("birthPlace", e.target.value)} className={inputCls} maxLength={120} />
+        </Field>
+        <Field label="Occupation">
+          <input value={form.occupation ?? ""} onChange={(e) => set("occupation", e.target.value)} className={inputCls} maxLength={120} />
+        </Field>
+        <Field label="Profession">
+          <input value={form.profession ?? ""} onChange={(e) => set("profession", e.target.value)} className={inputCls} maxLength={120} />
+        </Field>
+        <Field label="Voter ID">
+          <input value={form.voterId ?? ""} onChange={(e) => set("voterId", e.target.value)} className={inputCls} maxLength={40} />
+        </Field>
+        <Field label="Photo URL">
+          <input value={form.photo ?? ""} onChange={(e) => set("photo", e.target.value)} className={inputCls} maxLength={500} />
+        </Field>
+        <Field label="Father">
+          <PersonSelect value={form.fatherId} onChange={(v) => set("fatherId", v)} options={candidates.filter((m) => m.gender !== "female")} />
+        </Field>
+        <Field label="Mother">
+          <PersonSelect value={form.motherId} onChange={(v) => set("motherId", v)} options={candidates.filter((m) => m.gender !== "male")} />
+        </Field>
+        <Field label="Spouse">
+          <PersonSelect value={form.spouseId} onChange={(v) => set("spouseId", v)} options={candidates} />
+        </Field>
+        <Field label="Status">
+          <select
+            value={form.alive === false ? "no" : "yes"}
+            onChange={(e) => set("alive", e.target.value === "yes")}
+            className={inputCls}
+          >
+            <option value="yes">Alive</option>
+            <option value="no">Deceased</option>
+          </select>
+        </Field>
+      </div>
+      <Field label="Bio">
+        <textarea
+          value={form.bio ?? ""}
+          onChange={(e) => set("bio", e.target.value)}
+          className={inputCls + " min-h-[80px]"}
+          maxLength={1000}
+        />
+      </Field>
+      <div className="flex items-center justify-end gap-2">
+        <button type="button" onClick={onClose} className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition">
+          Cancel
+        </button>
+        <button type="submit" className="text-xs rounded-full bg-primary text-primary-foreground px-4 py-2 hover:opacity-90 transition">
+          Save changes
+        </button>
+      </div>
+    </form>
+  );
+}
+
+const inputCls =
+  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40";
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{label}</div>
+      {children}
+    </label>
+  );
+}
+
+function PersonSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string | undefined;
+  onChange: (v: string | undefined) => void;
+  options: FamilyMember[];
+}) {
+  return (
+    <select
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value || undefined)}
+      className={inputCls}
+    >
+      <option value="">—</option>
+      {options.map((m) => (
+        <option key={m.id} value={m.id}>
+          {m.name}
+        </option>
+      ))}
+    </select>
   );
 }

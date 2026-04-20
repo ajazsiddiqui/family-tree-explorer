@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { family } from "@/data/family";
+import { useFamily } from "@/lib/family-store";
 import { upcomingBirthdays, initials, ageOf } from "@/lib/family-tree";
 
 export function BirthdaysPanel() {
+  const family = useFamily();
   // Compute on client only — depends on "today", which differs SSR vs CSR.
   const [items, setItems] = useState<ReturnType<typeof upcomingBirthdays>>([]);
   useEffect(() => {
     setItems(upcomingBirthdays(family, 90).slice(0, 6));
-  }, []);
+  }, [family]);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)] min-h-[120px]">
