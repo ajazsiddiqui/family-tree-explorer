@@ -26,9 +26,10 @@ export function BirthdaysPanel() {
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium truncate">{member.name}</div>
                   <div className="text-[11px] text-muted-foreground">
-                    {date.toLocaleDateString(undefined, {
+                    {date.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
+                      timeZone: "UTC",
                     })}{" "}
                     · turning {age}
                   </div>
