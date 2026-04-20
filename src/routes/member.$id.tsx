@@ -73,6 +73,9 @@ function MemberDetail() {
   const navigate = useNavigate();
   const member = findMember(family, id);
   const [editing, setEditing] = useState(false);
+  const [addingChild, setAddingChild] = useState(false);
+  const [childName, setChildName] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   if (!member) {
     return (
@@ -93,26 +96,28 @@ function MemberDetail() {
   const age = ageOf(member);
   const gen = generationOf(family, member.id);
 
-  const handleDelete = () => {
-    if (!confirm(`Delete ${member.name}? This cannot be undone.`)) return;
+  const doDelete = () => {
     familyStore.remove(member.id);
     navigate({ to: "/" });
   };
 
-  const handleAddChild = () => {
-    const name = prompt(`Add child of ${member.name}. Name?`);
-    if (!name?.trim()) return;
+  const submitChild = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = childName.trim();
+    if (!name) return;
     const childId = newId("c");
     const fatherId = member.gender === "male" ? member.id : spouse?.gender === "male" ? spouse.id : member.id;
     const motherId = member.gender === "female" ? member.id : spouse?.gender === "female" ? spouse.id : undefined;
     familyStore.upsert({
       id: childId,
-      name: name.trim(),
+      name,
       gender: "other",
       alive: true,
       fatherId,
       motherId,
     });
+    setChildName("");
+    setAddingChild(false);
     navigate({ to: "/member/$id", params: { id: childId } });
   };
 
@@ -134,13 +139,14 @@ function MemberDetail() {
               {editing ? "Close" : "Edit"}
             </button>
             <button
-              onClick={handleAddChild}
+              onClick={() => setAddingChild((v) => !v)}
               className="text-xs rounded-full border border-border px-3 py-1.5 hover:bg-muted transition"
+              data-testid="add-child-toggle"
             >
               + Child
             </button>
             <button
-              onClick={handleDelete}
+              onClick={() => setConfirmingDelete(true)}
               className="text-xs rounded-full border border-destructive/40 text-destructive px-3 py-1.5 hover:bg-destructive/10 transition"
             >
               Delete
@@ -148,6 +154,55 @@ function MemberDetail() {
             <div className="text-xs text-muted-foreground ml-2">Gen {gen}</div>
           </div>
         </div>
+        {addingChild && (
+          <div className="max-w-4xl mx-auto px-6 pb-4">
+            <form onSubmit={submitChild} className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={childName}
+                onChange={(e) => setChildName(e.target.value)}
+                placeholder={`Child of ${member.name} — name`}
+                className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                maxLength={120}
+                data-testid="child-name-input"
+              />
+              <button
+                type="submit"
+                className="text-xs rounded-full bg-primary text-primary-foreground px-4 py-2 hover:opacity-90 transition"
+              >
+                Add
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAddingChild(false); setChildName(""); }}
+                className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition"
+              >
+                Cancel
+              </button>
+            </form>
+          </div>
+        )}
+        {confirmingDelete && (
+          <div className="max-w-4xl mx-auto px-6 pb-4">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-2">
+              <span className="text-sm">Delete <strong>{member.name}</strong>? This cannot be undone.</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={doDelete}
+                  className="text-xs rounded-full bg-destructive text-destructive-foreground px-4 py-2 hover:opacity-90 transition"
+                >
+                  Confirm delete
+                </button>
+                <button
+                  onClick={() => setConfirmingDelete(false)}
+                  className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
