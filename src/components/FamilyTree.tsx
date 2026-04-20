@@ -298,7 +298,7 @@ export function FamilyTree({ nodes, highlightId }: Props) {
               <path
                 key={c.key}
                 d={c.d}
-                stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "oklch(0.82 0.01 80)"}
+                stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "#A2966B"}
                 strokeWidth={c.highlighted ? 4 : 2}
                 strokeLinecap="round"
                 fill="none"
