@@ -164,6 +164,67 @@ export function FamilyTree({ nodes, highlightId }: Props) {
   const zoomReset = () => setManualScale(null);
 
   const effectiveScale = manualScale ?? scale;
+  const effectiveScaleRef = useRef(effectiveScale);
+  effectiveScaleRef.current = effectiveScale;
+
+  // Ctrl/Cmd + wheel zoom and pinch-to-zoom
+  useEffect(() => {
+    const wrap = wrapperRef.current;
+    if (!wrap) return;
+
+    const clamp = (v: number) => Math.max(0.3, Math.min(2, v));
+
+    const onWheel = (e: WheelEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      // trackpad pinch fires wheel with ctrlKey=true; deltaY can be small
+      const factor = Math.exp(-e.deltaY * 0.01);
+      setManualScale((s) => clamp((s ?? effectiveScaleRef.current) * factor));
+    };
+
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+
+    const dist = (a: Touch, b: Touch) => {
+      const dx = a.clientX - b.clientX;
+      const dy = a.clientY - b.clientY;
+      return Math.hypot(dx, dy);
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        pinchStartDist = dist(e.touches[0], e.touches[1]);
+        pinchStartScale = effectiveScaleRef.current;
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && pinchStartDist > 0) {
+        e.preventDefault();
+        const d = dist(e.touches[0], e.touches[1]);
+        const factor = d / pinchStartDist;
+        setManualScale(clamp(pinchStartScale * factor));
+      }
+    };
+
+    const onTouchEnd = () => {
+      pinchStartDist = 0;
+    };
+
+    wrap.addEventListener("wheel", onWheel, { passive: false });
+    wrap.addEventListener("touchstart", onTouchStart, { passive: true });
+    wrap.addEventListener("touchmove", onTouchMove, { passive: false });
+    wrap.addEventListener("touchend", onTouchEnd, { passive: true });
+    wrap.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      wrap.removeEventListener("wheel", onWheel);
+      wrap.removeEventListener("touchstart", onTouchStart);
+      wrap.removeEventListener("touchmove", onTouchMove);
+      wrap.removeEventListener("touchend", onTouchEnd);
+      wrap.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, []);
 
   const toggle = (id: string) =>
     setExpanded((s) => {
