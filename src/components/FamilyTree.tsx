@@ -376,14 +376,22 @@ export function FamilyTree({ nodes, highlightId }: Props) {
             "radial-gradient(circle at 20% 0%, oklch(0.95 0.06 60 / 0.5), transparent 55%), radial-gradient(circle at 80% 100%, oklch(0.95 0.06 200 / 0.4), transparent 55%)",
         }}
       />
-      <div className="relative p-6 flex justify-center items-start overflow-auto">
+      <div
+        ref={scrollRef}
+        onPointerDown={onPanStart}
+        onPointerMove={onPanMove}
+        onPointerUp={onPanEnd}
+        onPointerCancel={onPanEnd}
+        className="relative p-6 flex justify-center items-start overflow-auto"
+        style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "pan-y" }}
+      >
         <div
           style={{
             width: totalW,
             height: totalH,
             transform: `scale(${effectiveScale})`,
             transformOrigin: "top center",
-            transition: "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
+            transition: isPanning ? "none" : "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
             position: "relative",
           }}
         >
