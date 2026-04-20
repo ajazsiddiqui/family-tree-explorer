@@ -67,23 +67,6 @@ function layout(node: TreeNode, x: number, y: number): PositionedNode {
   };
 }
 
-function flatten(p: PositionedNode, acc: PositionedNode[] = []): PositionedNode[] {
-  acc.push(p);
-  // re-derive children with proper x relative to parent's pairCenter
-  const childY = p.y + 180 + ROW_GAP;
-  let cursorX = p.x - (p.childCenters.length
-    ? (p.childCenters[p.childCenters.length - 1] - p.childCenters[0]) / 2 + pairWidth(p.node.children[0]) / 2
-    : 0);
-  // simpler: re-layout children with correct offsets using stored centers
-  for (let i = 0; i < p.node.children.length; i++) {
-    const child = p.node.children[i];
-    const cw = subtreeWidth(child);
-    const cx = p.childCenters[i] - pairWidth(child) / 2;
-    const childPos = layoutAt(child, cx, childY);
-    flatten(childPos, acc);
-  }
-  return acc;
-}
 
 function subtreeWidth(node: TreeNode): number {
   if (node.children.length === 0) return pairWidth(node);
