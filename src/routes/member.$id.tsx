@@ -131,6 +131,8 @@ function MemberDetail() {
             { label: "Birth place", value: member.birthPlace ?? "—" },
             { label: "Date of marriage", value: formatDate(member.dom) },
             { label: "Spouse", value: spouse?.name ?? "—" },
+            { label: "Profession", value: member.profession ?? member.occupation ?? "—" },
+            { label: "Voter ID", value: member.voterId ?? "—" },
             ...(member.dod
               ? [{ label: "Date of passing", value: formatDate(member.dod) }]
               : []),
