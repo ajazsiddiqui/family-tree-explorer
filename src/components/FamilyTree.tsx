@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { TreeNode } from "@/lib/family-tree";
 import { MemberCard } from "./MemberCard";
 
@@ -7,112 +7,190 @@ interface Props {
   highlightId?: string;
 }
 
-/** A pair = the member + (optionally) their spouse, displayed side-by-side. */
-function CouplePair({
-  node,
-  tint,
-  highlightId,
-  onAnyToggle,
-}: {
-  node: TreeNode;
-  tint: number;
-  highlightId?: string;
-  onAnyToggle: () => void;
-}) {
-  const [exp1, setExp1] = useState(highlightId === node.member.id);
-  const [exp2, setExp2] = useState(highlightId === node.spouse?.id);
+const CARD_W = 120;
+const COUPLE_GAP = 14; // includes heart space
+const SIBLING_GAP = 18;
+const ROW_GAP = 90; // vertical space between generations (gap for connectors)
 
-  return (
-    <div className="relative inline-flex items-start gap-1 px-1">
-      <MemberCard
-        member={node.member}
-        tint={tint}
-        expanded={exp1}
-        onToggle={() => {
-          setExp1((e) => !e);
-          requestAnimationFrame(onAnyToggle);
-        }}
-      />
-      {node.spouse && (
-        <>
-          {/* heart connector between spouses (decorative, non-blocking) */}
-          <div
-            aria-hidden
-            className="pointer-events-none self-center -mx-1.5 z-10 w-6 h-6 rounded-full bg-white ring-2 ring-[var(--branch)] flex items-center justify-center mt-14 text-[var(--branch)]"
-            style={{ fontFamily: "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif", fontSize: 11 }}
-          >
-            ❤
-          </div>
-          <MemberCard
-            member={node.spouse}
-            tint={tint}
-            expanded={exp2}
-            onToggle={() => {
-              setExp2((e) => !e);
-              requestAnimationFrame(onAnyToggle);
-            }}
-          />
-        </>
-      )}
-    </div>
-  );
+interface PositionedNode {
+  node: TreeNode;
+  x: number; // center x
+  y: number; // top y
+  width: number; // width of this subtree
+  childCenters: number[]; // x of each child's center
+  pairCenter: number; // center x of the couple pair (= x for single, midpoint for couple)
 }
 
-function NodeView({
-  node,
-  tint,
-  highlightId,
-  onAnyToggle,
-}: {
-  node: TreeNode;
-  tint: number;
-  highlightId?: string;
-  onAnyToggle: () => void;
-}) {
-  return (
-    <li className="relative flex flex-col items-center px-3">
-      <CouplePair
-        node={node}
-        tint={tint}
-        highlightId={highlightId}
-        onAnyToggle={onAnyToggle}
-      />
-      {node.children.length > 0 && (
-        <ul className="tree-children flex justify-center mt-[150px] relative">
-          {node.children.map((c, i) => (
-            <NodeView
-              key={c.member.id}
-              node={c}
-              tint={((tint + i) % 6) + 1}
-              highlightId={highlightId}
-              onAnyToggle={onAnyToggle}
-            />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
+function pairWidth(node: TreeNode) {
+  return node.spouse ? CARD_W * 2 + COUPLE_GAP : CARD_W;
+}
+
+function layout(node: TreeNode, x: number, y: number): PositionedNode {
+  const ownW = pairWidth(node);
+
+  if (node.children.length === 0) {
+    return {
+      node,
+      x: x + ownW / 2,
+      y,
+      width: ownW,
+      childCenters: [],
+      pairCenter: x + ownW / 2,
+    };
+  }
+
+  // layout children to the right starting at x
+  const childY = y + 180 + ROW_GAP; // 180 ~ approx card+couple height
+  let cursorX = x;
+  const childResults: PositionedNode[] = [];
+  for (const child of node.children) {
+    const r = layout(child, cursorX, childY);
+    childResults.push(r);
+    cursorX += r.width + SIBLING_GAP;
+  }
+  cursorX -= SIBLING_GAP;
+  const childrenWidth = cursorX - x;
+
+  const totalWidth = Math.max(ownW, childrenWidth);
+  // center own pair over childrenWidth
+  const pairCenter = x + childrenWidth / 2;
+
+  return {
+    node,
+    x: pairCenter,
+    y,
+    width: totalWidth,
+    childCenters: childResults.map((c) => c.pairCenter),
+    pairCenter,
+  };
+}
+
+function flatten(p: PositionedNode, acc: PositionedNode[] = []): PositionedNode[] {
+  acc.push(p);
+  // re-derive children with proper x relative to parent's pairCenter
+  const childY = p.y + 180 + ROW_GAP;
+  let cursorX = p.x - (p.childCenters.length
+    ? (p.childCenters[p.childCenters.length - 1] - p.childCenters[0]) / 2 + pairWidth(p.node.children[0]) / 2
+    : 0);
+  // simpler: re-layout children with correct offsets using stored centers
+  for (let i = 0; i < p.node.children.length; i++) {
+    const child = p.node.children[i];
+    const cw = subtreeWidth(child);
+    const cx = p.childCenters[i] - pairWidth(child) / 2;
+    const childPos = layoutAt(child, cx, childY);
+    flatten(childPos, acc);
+  }
+  return acc;
+}
+
+function subtreeWidth(node: TreeNode): number {
+  if (node.children.length === 0) return pairWidth(node);
+  let w = 0;
+  for (const c of node.children) w += subtreeWidth(c) + SIBLING_GAP;
+  w -= SIBLING_GAP;
+  return Math.max(pairWidth(node), w);
+}
+
+function layoutAt(node: TreeNode, x: number, y: number): PositionedNode {
+  const ownW = pairWidth(node);
+  const subW = subtreeWidth(node);
+
+  if (node.children.length === 0) {
+    return {
+      node,
+      x: x + ownW / 2,
+      y,
+      width: ownW,
+      childCenters: [],
+      pairCenter: x + ownW / 2,
+    };
+  }
+
+  // children laid out from x, stretched across subW
+  const childY = y + 180 + ROW_GAP;
+  let cursor = x + Math.max(0, (ownW - subW) / 2); // if own is wider than children
+  // but we want children to span exactly subW starting at x
+  let totalChildW = 0;
+  for (const c of node.children) totalChildW += subtreeWidth(c) + SIBLING_GAP;
+  totalChildW -= SIBLING_GAP;
+  const startX = x + (subW - totalChildW) / 2;
+  cursor = startX;
+  const centers: number[] = [];
+  for (const c of node.children) {
+    const cw = subtreeWidth(c);
+    const cPos = layoutAt(c, cursor, childY);
+    centers.push(cPos.pairCenter);
+    cursor += cw + SIBLING_GAP;
+  }
+  const pairCenter = x + subW / 2;
+  return {
+    node,
+    x: pairCenter,
+    y,
+    width: subW,
+    childCenters: centers,
+    pairCenter,
+  };
+}
+
+function collectAll(p: PositionedNode, acc: PositionedNode[] = []): PositionedNode[] {
+  acc.push(p);
+  const childY = p.y + 180 + ROW_GAP;
+  let totalChildW = 0;
+  for (const c of p.node.children) totalChildW += subtreeWidth(c) + SIBLING_GAP;
+  totalChildW -= SIBLING_GAP;
+  const startX = p.x - totalChildW / 2;
+  let cursor = startX;
+  for (const c of p.node.children) {
+    const cw = subtreeWidth(c);
+    const childPos = layoutAt(c, cursor, childY);
+    collectAll(childPos, acc);
+    cursor += cw + SIBLING_GAP;
+  }
+  return acc;
 }
 
 export function FamilyTree({ nodes, highlightId }: Props) {
+  const [expanded, setExpanded] = useState<Set<string>>(
+    new Set(highlightId ? [highlightId] : []),
+  );
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
-  const fit = () => {
-    const wrap = wrapperRef.current;
-    const inner = innerRef.current;
-    if (!wrap || !inner) return;
-    inner.style.transform = "scale(1)";
-    const naturalW = inner.scrollWidth;
-    const naturalH = inner.scrollHeight;
-    const availW = wrap.clientWidth - 32;
-    const availH = Math.min(window.innerHeight * 0.78, 900);
-    const s = Math.max(0.55, Math.min(1, availW / naturalW, availH / naturalH));
-    setScale(s);
-  };
+  const toggle = (id: string) =>
+    setExpanded((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
 
-  useEffect(() => {
+  // layout the forest horizontally
+  let xCursor = 0;
+  const positions: PositionedNode[] = [];
+  for (const root of nodes) {
+    const w = subtreeWidth(root);
+    const p = layoutAt(root, xCursor, 0);
+    collectAll(p, positions);
+    xCursor += w + SIBLING_GAP * 4;
+  }
+  const totalW = xCursor - SIBLING_GAP * 4;
+  const totalH = Math.max(
+    ...positions.map(
+      (p) => p.y + 180 + (expanded.has(p.node.member.id) || (p.node.spouse && expanded.has(p.node.spouse.id)) ? 110 : 0),
+    ),
+  );
+
+  // auto-fit
+  useLayoutEffect(() => {
+    const fit = () => {
+      const wrap = wrapperRef.current;
+      if (!wrap) return;
+      const availW = wrap.clientWidth - 32;
+      const availH = Math.min(window.innerHeight * 0.78, 900);
+      const s = Math.max(0.5, Math.min(1, availW / totalW, availH / totalH));
+      setScale(s);
+    };
     fit();
     const ro = new ResizeObserver(fit);
     if (wrapperRef.current) ro.observe(wrapperRef.current);
@@ -121,8 +199,38 @@ export function FamilyTree({ nodes, highlightId }: Props) {
       ro.disconnect();
       window.removeEventListener("resize", fit);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [totalW, totalH, expanded]);
+
+  // Build connector path data
+  const connectors: { d: string; key: string }[] = [];
+  for (const p of positions) {
+    if (p.node.children.length === 0) continue;
+    const parentBottomY = p.y + 130; // bottom of pair
+    const busY = p.y + 180 + ROW_GAP / 2; // mid of gap
+    const childTopY = p.y + 180 + ROW_GAP;
+
+    // trunk down from parent center to bus
+    connectors.push({
+      key: `trunk-${p.node.member.id}`,
+      d: `M ${p.x} ${parentBottomY} L ${p.x} ${busY}`,
+    });
+    // horizontal bus
+    const minX = Math.min(...p.childCenters);
+    const maxX = Math.max(...p.childCenters);
+    if (p.childCenters.length > 1) {
+      connectors.push({
+        key: `bus-${p.node.member.id}`,
+        d: `M ${minX} ${busY} L ${maxX} ${busY}`,
+      });
+    }
+    // drops to each child
+    for (let i = 0; i < p.childCenters.length; i++) {
+      connectors.push({
+        key: `drop-${p.node.member.id}-${i}`,
+        d: `M ${p.childCenters[i]} ${busY} L ${p.childCenters[i]} ${childTopY}`,
+      });
+    }
+  }
 
   return (
     <div
@@ -139,90 +247,83 @@ export function FamilyTree({ nodes, highlightId }: Props) {
       />
       <div className="relative p-6 flex justify-center items-start overflow-auto">
         <div
-          ref={innerRef}
           style={{
+            width: totalW,
+            height: totalH,
             transform: `scale(${scale})`,
             transformOrigin: "top center",
             transition: "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
+            position: "relative",
           }}
         >
-          <ul className="tree-root inline-flex justify-center">
-            {nodes.map((n, i) => (
-              <NodeView
-                key={n.member.id}
-                node={n}
-                tint={i + 1}
-                highlightId={highlightId}
-                onAnyToggle={fit}
+          {/* SVG connectors */}
+          <svg
+            width={totalW}
+            height={totalH}
+            className="absolute inset-0 pointer-events-none"
+            style={{ overflow: "visible" }}
+          >
+            {connectors.map((c) => (
+              <path
+                key={c.key}
+                d={c.d}
+                stroke="var(--branch)"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                fill="none"
               />
             ))}
-          </ul>
+          </svg>
+
+          {/* Cards */}
+          {positions.map((p, idx) => {
+            const isExp1 = expanded.has(p.node.member.id);
+            const isExp2 = p.node.spouse ? expanded.has(p.node.spouse.id) : false;
+            const tint = ((idx % 6) + 1);
+            const pw = pairWidth(p.node);
+            const left = p.x - pw / 2;
+            return (
+              <div
+                key={p.node.member.id}
+                className="absolute flex items-start gap-0"
+                style={{ left, top: p.y, width: pw }}
+              >
+                <MemberCard
+                  member={p.node.member}
+                  tint={tint}
+                  expanded={isExp1}
+                  onToggle={() => toggle(p.node.member.id)}
+                />
+                {p.node.spouse && (
+                  <>
+                    <div
+                      aria-hidden
+                      className="pointer-events-none self-start mt-12 -mx-1 z-10 w-6 h-6 rounded-full bg-white ring-2 ring-[var(--branch)] flex items-center justify-center text-[var(--branch)]"
+                      style={{
+                        fontFamily:
+                          "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif",
+                        fontSize: 11,
+                      }}
+                    >
+                      ❤
+                    </div>
+                    <MemberCard
+                      member={p.node.spouse}
+                      tint={tint}
+                      expanded={isExp2}
+                      onToggle={() => toggle(p.node.spouse!.id)}
+                    />
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
       <div className="absolute bottom-3 right-4 text-[10px] text-muted-foreground bg-card/80 backdrop-blur rounded-full px-2.5 py-1 border border-border">
         {Math.round(scale * 100)}% · auto-fit
       </div>
-
-      <style>{`
-        .tree-root, .tree-root ul {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-        .tree-children > li {
-          position: relative;
-        }
-        /* trunk down from parent */
-        .tree-children::before {
-          content: "";
-          position: absolute;
-          top: -80px;
-          left: 50%;
-          width: 2.5px;
-          height: 80px;
-          background: var(--branch);
-          transform: translateX(-50%);
-          border-radius: 4px;
-        }
-        /* horizontal bus across siblings */
-        .tree-children > li::before {
-          content: "";
-          position: absolute;
-          top: -50px;
-          left: 0;
-          right: 0;
-          height: 2.5px;
-          background: var(--branch);
-          border-radius: 4px;
-        }
-        .tree-children > li:only-child::before {
-          left: 50%;
-          right: 50%;
-        }
-        .tree-children > li:first-child::before {
-          left: 50%;
-          border-top-left-radius: 12px;
-          border-bottom-left-radius: 12px;
-        }
-        .tree-children > li:last-child::before {
-          right: 50%;
-          border-top-right-radius: 12px;
-          border-bottom-right-radius: 12px;
-        }
-        /* drop from bus into each child */
-        .tree-children > li::after {
-          content: "";
-          position: absolute;
-          top: -50px;
-          left: 50%;
-          width: 2.5px;
-          height: 50px;
-          background: var(--branch);
-          transform: translateX(-50%);
-          border-radius: 4px;
-        }
-      `}</style>
     </div>
   );
 }
