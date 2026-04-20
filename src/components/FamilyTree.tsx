@@ -281,8 +281,8 @@ export function FamilyTree({ nodes, highlightId }: Props) {
               <path
                 key={c.key}
                 d={c.d}
-                stroke="var(--branch)"
-                strokeWidth={2.5}
+                stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "var(--branch)"}
+                strokeWidth={c.highlighted ? 4 : 2.5}
                 strokeLinecap="round"
                 fill="none"
                 pathLength={1}
@@ -291,6 +291,8 @@ export function FamilyTree({ nodes, highlightId }: Props) {
                 style={{
                   animation: `branch-draw 0.7s cubic-bezier(0.65,0,0.35,1) forwards`,
                   animationDelay: `${0.05 + i * 0.04}s`,
+                  transition: "stroke 0.3s ease, stroke-width 0.3s ease",
+                  filter: c.highlighted ? "drop-shadow(0 0 6px var(--branch-soft))" : undefined,
                 }}
               />
             ))}
