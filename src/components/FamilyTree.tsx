@@ -8,8 +8,8 @@ interface Props {
 }
 
 const CARD_W = 96;
-const CARD_H = 150; // base card height (collapsed)
-const CARD_H_EXPANDED = 250; // expanded card height (with details + button)
+const CARD_H = 118; // base card height (collapsed) — tight to actual rendered card
+const CARD_H_EXPANDED = 230; // expanded card height
 const COUPLE_GAP = 14; // includes heart space
 const SIBLING_GAP = 18;
 const ROW_GAP = 32; // vertical space between generations
@@ -299,7 +299,7 @@ export function FamilyTree({ nodes, highlightId }: Props) {
                 key={c.key}
                 d={c.d}
                 stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "#A2966B"}
-                strokeWidth={c.highlighted ? 4 : 2}
+                strokeWidth={c.highlighted ? 2 : 1}
                 strokeLinecap="round"
                 fill="none"
                 pathLength={1}
