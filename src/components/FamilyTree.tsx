@@ -76,9 +76,10 @@ function subtreeWidth(node: TreeNode): number {
   return Math.max(pairWidth(node), w);
 }
 
-function nodeHeight(node: TreeNode, isExpanded: (id: string) => boolean): number {
-  const a = isExpanded(node.member.id);
-  const b = node.spouse ? isExpanded(node.spouse.id) : false;
+function nodeHeight(node: TreeNode, isExpanded?: (id: string) => boolean): number {
+  const check = isExpanded ?? (() => false);
+  const a = check(node.member.id);
+  const b = node.spouse ? check(node.spouse.id) : false;
   return a || b ? CARD_H_EXPANDED : CARD_H;
 }
 
