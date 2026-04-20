@@ -97,8 +97,8 @@ function MemberDetail() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <section className="rounded-3xl bg-[var(--gradient-card)] border border-border shadow-[var(--shadow-pop)] p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-secondary to-accent ring-4 ring-background flex items-center justify-center text-4xl font-bold text-foreground/70 shrink-0">
+        <section className="rounded-3xl bg-[var(--gradient-card)] border border-border shadow-[var(--shadow-pop)] p-8 flex flex-col items-center gap-5 text-center">
+          <div className="w-36 h-36 rounded-full bg-gradient-to-br from-secondary via-background to-accent ring-4 ring-background shadow-lg flex items-center justify-center text-5xl font-bold text-foreground/70 shrink-0">
             {member.photo ? (
               <img
                 src={member.photo}
@@ -109,15 +109,15 @@ function MemberDetail() {
               initials(member.name)
             )}
           </div>
-          <div className="flex-1 text-center sm:text-left">
+          <div className="w-full max-w-xl">
             <h1 className="text-3xl font-bold tracking-tight">{member.name}</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1.5">
               {member.occupation}
-              {age !== null && ` · ${age} years${member.alive === false ? " (deceased)" : ""}`}
+              {age !== null && ` · ${age} years${member.alive === false ? " (in loving memory)" : ""}`}
             </p>
             {member.bio && (
-              <p className="mt-3 text-sm leading-relaxed text-foreground/80">
-                {member.bio}
+              <p className="mt-4 text-sm leading-relaxed text-foreground/80 italic">
+                "{member.bio}"
               </p>
             )}
           </div>

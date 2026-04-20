@@ -81,12 +81,12 @@ function Index() {
           ))}
         </section>
 
-        <div className="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
-          <section>
+        <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
+          <section className="min-w-0">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Family tree</h2>
               <p className="text-xs text-muted-foreground">
-                Click any card to expand · scroll to pan
+                Click any card to expand · auto-fits to screen
               </p>
             </div>
             <FamilyTree nodes={forest} />
