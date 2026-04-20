@@ -251,7 +251,7 @@ export function FamilyTree({ nodes, highlightId }: Props) {
             className="absolute inset-0 pointer-events-none"
             style={{ overflow: "visible" }}
           >
-            {connectors.map((c) => (
+            {connectors.map((c, i) => (
               <path
                 key={c.key}
                 d={c.d}
@@ -259,6 +259,13 @@ export function FamilyTree({ nodes, highlightId }: Props) {
                 strokeWidth={2.5}
                 strokeLinecap="round"
                 fill="none"
+                pathLength={1}
+                strokeDasharray={1}
+                strokeDashoffset={1}
+                style={{
+                  animation: `branch-draw 0.7s cubic-bezier(0.65,0,0.35,1) forwards`,
+                  animationDelay: `${0.05 + i * 0.04}s`,
+                }}
               />
             ))}
           </svg>
