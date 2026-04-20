@@ -32,6 +32,9 @@ function Index() {
   const total = family.length;
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   const generations = new Set(
     family.map((m) => {
@@ -57,6 +60,8 @@ function Index() {
     a.download = `family-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    setMsg("Exported family.json");
+    setTimeout(() => setMsg(null), 3000);
   };
 
   const handleImport = (file: File) => {
@@ -69,18 +74,22 @@ function Index() {
     reader.readAsText(file);
   };
 
-  const handleReset = () => {
-    if (confirm("Reset to the seed family data? Your edits will be lost.")) {
-      familyStore.reset();
-    }
+  const submitAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    const id = newId("m");
+    familyStore.upsert({ id, name, gender: "other", alive: true });
+    setNewName("");
+    setAdding(false);
+    window.location.href = `/member/${id}`;
   };
 
-  const handleAddRoot = () => {
-    const name = prompt("New member name?");
-    if (!name?.trim()) return;
-    const id = newId("m");
-    familyStore.upsert({ id, name: name.trim(), gender: "other", alive: true });
-    window.location.href = `/member/${id}`;
+  const doReset = () => {
+    familyStore.reset();
+    setConfirmingReset(false);
+    setMsg("Reset to seed data.");
+    setTimeout(() => setMsg(null), 3000);
   };
 
   return (
