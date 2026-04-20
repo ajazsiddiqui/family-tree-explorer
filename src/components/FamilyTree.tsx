@@ -35,9 +35,13 @@ function CouplePair({
       />
       {node.spouse && (
         <>
-          {/* heart connector between spouses */}
-          <div className="self-center -mx-1 z-10 w-5 h-5 rounded-full bg-white ring-2 ring-[var(--branch-soft)] flex items-center justify-center text-[10px] mt-12">
-            ♥
+          {/* heart connector between spouses (decorative, non-blocking) */}
+          <div
+            aria-hidden
+            className="pointer-events-none self-center -mx-1.5 z-10 w-6 h-6 rounded-full bg-white ring-2 ring-[var(--branch)] flex items-center justify-center mt-14 text-[var(--branch)]"
+            style={{ fontFamily: "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif", fontSize: 11 }}
+          >
+            ❤
           </div>
           <MemberCard
             member={node.spouse}
@@ -74,7 +78,7 @@ function NodeView({
         onAnyToggle={onAnyToggle}
       />
       {node.children.length > 0 && (
-        <ul className="tree-children flex justify-center pt-12 mt-10 relative">
+        <ul className="tree-children flex justify-center pt-16 mt-14 relative">
           {node.children.map((c, i) => (
             <NodeView
               key={c.member.id}
