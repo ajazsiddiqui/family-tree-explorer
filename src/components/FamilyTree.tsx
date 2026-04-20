@@ -156,8 +156,66 @@ export function FamilyTree({ nodes, highlightId }: Props) {
     new Set(highlightId ? [highlightId] : []),
   );
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [manualScale, setManualScale] = useState<number | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const panState = useRef<{
+    active: boolean;
+    startX: number;
+    startY: number;
+    scrollLeft: number;
+    scrollTop: number;
+    pointerId: number;
+    moved: boolean;
+  } | null>(null);
+
+  const onPanStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Don't hijack drags that start on interactive elements (cards/buttons)
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, input, [role='button']")) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    panState.current = {
+      active: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      scrollLeft: el.scrollLeft,
+      scrollTop: el.scrollTop,
+      pointerId: e.pointerId,
+      moved: false,
+    };
+    setIsPanning(true);
+  };
+
+  const onPanMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const st = panState.current;
+    const el = scrollRef.current;
+    if (!st || !st.active || !el) return;
+    const dx = e.clientX - st.startX;
+    const dy = e.clientY - st.startY;
+    if (!st.moved && Math.hypot(dx, dy) > 4) {
+      st.moved = true;
+      try {
+        (e.currentTarget as HTMLDivElement).setPointerCapture(st.pointerId);
+      } catch {}
+    }
+    if (st.moved) {
+      el.scrollLeft = st.scrollLeft - dx;
+      el.scrollTop = st.scrollTop - dy;
+    }
+  };
+
+  const onPanEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    const st = panState.current;
+    if (st?.moved) {
+      try {
+        (e.currentTarget as HTMLDivElement).releasePointerCapture(st.pointerId);
+      } catch {}
+    }
+    panState.current = null;
+    setIsPanning(false);
+  };
 
   const zoomIn = () => setManualScale((s) => Math.min(2, (s ?? scale) + 0.1));
   const zoomOut = () => setManualScale((s) => Math.max(0.3, (s ?? scale) - 0.1));
@@ -376,14 +434,22 @@ export function FamilyTree({ nodes, highlightId }: Props) {
             "radial-gradient(circle at 20% 0%, oklch(0.95 0.06 60 / 0.5), transparent 55%), radial-gradient(circle at 80% 100%, oklch(0.95 0.06 200 / 0.4), transparent 55%)",
         }}
       />
-      <div className="relative p-6 flex justify-center items-start overflow-auto">
+      <div
+        ref={scrollRef}
+        onPointerDown={onPanStart}
+        onPointerMove={onPanMove}
+        onPointerUp={onPanEnd}
+        onPointerCancel={onPanEnd}
+        className="relative p-6 flex justify-center items-start overflow-auto"
+        style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "pan-y" }}
+      >
         <div
           style={{
             width: totalW,
             height: totalH,
             transform: `scale(${effectiveScale})`,
             transformOrigin: "top center",
-            transition: "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
+            transition: isPanning ? "none" : "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
             position: "relative",
           }}
         >
