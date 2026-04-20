@@ -201,8 +201,32 @@ export function FamilyTree({ nodes, highlightId }: Props) {
     };
   }, [totalW, totalH, expanded]);
 
+  // Map childMemberId -> { parentNodeId, childIndex } so we can walk ancestry
+  const parentLink = new Map<string, { parentId: string; index: number }>();
+  for (const p of positions) {
+    p.node.children.forEach((child, i) => {
+      parentLink.set(child.member.id, { parentId: p.node.member.id, index: i });
+      if (child.spouse) {
+        // spouse marriages also get highlighted via the same parent link if user expands spouse
+        parentLink.set(child.spouse.id, { parentId: p.node.member.id, index: i });
+      }
+    });
+  }
+
+  // Compute set of highlighted link keys by walking up from each expanded member
+  const highlightedLinks = new Set<string>();
+  for (const id of expanded) {
+    let cur: string | undefined = id;
+    while (cur) {
+      const link = parentLink.get(cur);
+      if (!link) break;
+      highlightedLinks.add(`link-${link.parentId}-${link.index}`);
+      cur = link.parentId;
+    }
+  }
+
   // Build connector path data — one smooth S-curve per parent→child link
-  const connectors: { d: string; key: string }[] = [];
+  const connectors: { d: string; key: string; highlighted: boolean }[] = [];
   for (const p of positions) {
     if (p.node.children.length === 0) continue;
     const h = nodeHeight(p.node, isExpanded);
@@ -213,9 +237,11 @@ export function FamilyTree({ nodes, highlightId }: Props) {
       const cx = p.childCenters[i];
       const c1y = y1 + dy * 0.55;
       const c2y = y2 - dy * 0.55;
+      const key = `link-${p.node.member.id}-${i}`;
       connectors.push({
-        key: `link-${p.node.member.id}-${i}`,
+        key,
         d: `M ${p.x} ${y1} C ${p.x} ${c1y}, ${cx} ${c2y}, ${cx} ${y2}`,
+        highlighted: highlightedLinks.has(key),
       });
     }
   }
