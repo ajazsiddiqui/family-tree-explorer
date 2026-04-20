@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { family } from "@/data/family";
+import { useFamily } from "@/lib/family-store";
 import { initials } from "@/lib/family-tree";
 
 export function MemberSearch() {
+  const family = useFamily();
   const [q, setQ] = useState("");
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -16,7 +17,7 @@ export function MemberSearch() {
           m.birthPlace?.toLowerCase().includes(s),
       )
       .slice(0, 6);
-  }, [q]);
+  }, [q, family]);
 
   return (
     <div className="relative w-full">
