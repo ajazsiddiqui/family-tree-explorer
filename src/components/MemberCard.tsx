@@ -19,7 +19,7 @@ export function MemberCard({ member, expanded, onToggle, tint = 1 }: Props) {
   return (
     <div
       className={cn(
-        "group relative w-[120px] rounded-2xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-pop)] flex flex-col items-center text-center pt-3 pb-2 px-2 shadow-[var(--shadow-soft)]",
+        "group relative w-[96px] rounded-xl border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-pop)] flex flex-col items-center text-center pt-2.5 pb-2 px-1.5 shadow-[var(--shadow-soft)]",
         expanded ? "border-[var(--branch)] ring-2 ring-[var(--branch-soft)]" : "border-border/60",
       )}
       style={{ background: bg }}
