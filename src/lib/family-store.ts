@@ -8,6 +8,19 @@ type Listener = () => void;
 let current: FamilyMember[] = loadInitial();
 const listeners = new Set<Listener>();
 
+/** Migrate old single-spouseId records to spouseIds array. */
+function migrate(members: FamilyMember[]): FamilyMember[] {
+  return members.map((m) => {
+    const legacy = m as FamilyMember & { spouseId?: string };
+    if (legacy.spouseId && !m.spouseIds?.length) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { spouseId, ...rest } = legacy;
+      return { ...rest, spouseIds: [spouseId] } as FamilyMember;
+    }
+    return m;
+  });
+}
+
 function loadInitial(): FamilyMember[] {
   if (typeof window === "undefined") return seedFamily;
   try {
@@ -15,7 +28,7 @@ function loadInitial(): FamilyMember[] {
     if (!raw) return seedFamily;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return seedFamily;
-    return parsed as FamilyMember[];
+    return migrate(parsed as FamilyMember[]);
   } catch {
     return seedFamily;
   }
@@ -47,7 +60,6 @@ export const familyStore = {
     const next = exists
       ? current.map((m) => (m.id === member.id ? { ...m, ...member } : m))
       : [...current, member];
-    // keep spouse links bidirectional
     persist(syncSpouses(next));
   },
 
@@ -58,18 +70,30 @@ export const familyStore = {
         ...m,
         fatherId: m.fatherId === id ? undefined : m.fatherId,
         motherId: m.motherId === id ? undefined : m.motherId,
-        spouseId: m.spouseId === id ? undefined : m.spouseId,
+        spouseIds: m.spouseIds?.filter((sid) => sid !== id) || undefined,
       }));
     persist(next);
   },
 
-  linkSpouse: (aId: string, bId: string | undefined) => {
+  addSpouse: (aId: string, bId: string) => {
     const next = current.map((m) => {
-      if (m.id === aId) return { ...m, spouseId: bId };
-      // Clear any old reverse links to aId, then set the new partner
-      if (bId && m.id === bId) return { ...m, spouseId: aId };
-      if (m.spouseId === aId && m.id !== bId) return { ...m, spouseId: undefined };
-      if (bId && m.spouseId === bId && m.id !== aId) return { ...m, spouseId: undefined };
+      if (m.id === aId) {
+        const ids = m.spouseIds ?? [];
+        return ids.includes(bId) ? m : { ...m, spouseIds: [...ids, bId] };
+      }
+      if (m.id === bId) {
+        const ids = m.spouseIds ?? [];
+        return ids.includes(aId) ? m : { ...m, spouseIds: [...ids, aId] };
+      }
+      return m;
+    });
+    persist(next);
+  },
+
+  removeSpouse: (aId: string, bId: string) => {
+    const next = current.map((m) => {
+      if (m.id === aId) return { ...m, spouseIds: (m.spouseIds ?? []).filter((id) => id !== bId) || undefined };
+      if (m.id === bId) return { ...m, spouseIds: (m.spouseIds ?? []).filter((id) => id !== aId) || undefined };
       return m;
     });
     persist(next);
@@ -79,10 +103,10 @@ export const familyStore = {
 function syncSpouses(members: FamilyMember[]): FamilyMember[] {
   const map = new Map(members.map((m) => [m.id, { ...m }]));
   for (const m of map.values()) {
-    if (m.spouseId) {
-      const other = map.get(m.spouseId);
-      if (other && other.spouseId !== m.id) {
-        other.spouseId = m.id;
+    for (const spId of m.spouseIds ?? []) {
+      const other = map.get(spId);
+      if (other && !(other.spouseIds ?? []).includes(m.id)) {
+        other.spouseIds = [...(other.spouseIds ?? []), m.id];
       }
     }
   }
@@ -116,7 +140,7 @@ export function importJson(json: string): { ok: true } | { ok: false; error: str
         return { ok: false, error: "Each member needs at least { id, name }." };
       }
     }
-    persist(syncSpouses(parsed as FamilyMember[]));
+    persist(syncSpouses(migrate(parsed as FamilyMember[])));
     return { ok: true };
   } catch (e) {
     return { ok: false, error: (e as Error).message };

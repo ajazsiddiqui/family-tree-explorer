@@ -35,6 +35,8 @@ function Index() {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [showBirthdays, setShowBirthdays] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const navigate = useNavigate();
 
   const generations = new Set(
@@ -94,142 +96,111 @@ function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/60 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">{familyName}</h1>
-            <p className="text-xs text-muted-foreground italic">{familyMotto}</p>
+    <div className="h-[100dvh] flex flex-col bg-background">
+      <header className="border-b border-white/60 bg-white/75 backdrop-blur-xl sticky top-0 z-20 relative shadow-[0_1px_24px_-8px_rgba(0,0,0,0.1)]">
+        {/* Main bar */}
+        <div className="px-4 py-3 flex items-center gap-3">
+          {/* Title */}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[14px] font-extrabold tracking-tight text-foreground truncate">{familyName}</h1>
+            <p className="text-[9.5px] text-muted-foreground/80 italic leading-tight hidden sm:block">{familyMotto} · {total} members</p>
           </div>
-          <div className="flex-1 max-w-md">
+
+          {/* Desktop search */}
+          <div className="hidden sm:block flex-1 max-w-xs">
             <MemberSearch />
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setAdding((v) => !v)}
-              className="text-xs rounded-full bg-primary text-primary-foreground px-3 py-1.5 hover:opacity-90 transition"
-              data-testid="add-member-toggle"
-            >
-              + Add member
+
+          {/* Desktop actions */}
+          <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+            <button onClick={() => setShowBirthdays((v) => !v)} className="text-[11px] font-medium rounded-full border border-border/60 bg-white/60 px-3 py-1.5 hover:bg-white transition shadow-sm">
+              🎉 Birthdays
             </button>
-            <button
-              onClick={handleExport}
-              className="text-xs rounded-full border border-border px-3 py-1.5 hover:bg-muted transition"
-            >
-              Export
+            <button onClick={() => setAdding((v) => !v)} className="text-[11px] font-semibold rounded-full bg-primary text-primary-foreground px-3.5 py-1.5 hover:opacity-90 transition shadow-sm" data-testid="add-member-toggle">
+              + Add
             </button>
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="text-xs rounded-full border border-border px-3 py-1.5 hover:bg-muted transition"
-            >
-              Import
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json,.json"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleImport(f);
-                e.target.value = "";
-              }}
-            />
-            <button
-              onClick={() => setConfirmingReset(true)}
-              className="text-xs rounded-full border border-border px-3 py-1.5 hover:bg-muted transition text-muted-foreground"
-            >
-              Reset
+            <button onClick={handleExport} className="text-[11px] font-medium rounded-full border border-border/60 bg-white/60 px-3 py-1.5 hover:bg-white transition shadow-sm">Export</button>
+            <button onClick={() => fileRef.current?.click()} className="text-[11px] font-medium rounded-full border border-border/60 bg-white/60 px-3 py-1.5 hover:bg-white transition shadow-sm">Import</button>
+            <button onClick={() => setConfirmingReset(true)} className="text-[11px] font-medium rounded-full border border-border/60 bg-white/60 px-3 py-1.5 hover:bg-white transition shadow-sm text-muted-foreground">Reset</button>
+          </div>
+
+          {/* Mobile actions */}
+          <div className="flex sm:hidden items-center gap-2 shrink-0">
+            <button onClick={() => setShowBirthdays((v) => !v)} className="w-8 h-8 rounded-full border border-border/60 bg-white/60 flex items-center justify-center text-base shadow-sm active:bg-white">🎉</button>
+            <button onClick={() => setAdding((v) => !v)} className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-lg font-semibold shadow-sm active:opacity-80" data-testid="add-member-toggle">+</button>
+            <button onClick={() => setShowMobileMenu((v) => !v)} className="w-8 h-8 rounded-full border border-border/60 bg-white/60 flex items-center justify-center shadow-sm active:bg-white" aria-label="More options">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-foreground/70">
+                <circle cx="8" cy="3" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="8" cy="13" r="1.3"/>
+              </svg>
             </button>
           </div>
         </div>
+
+        {/* Mobile search */}
+        <div className="sm:hidden px-4 pb-3">
+          <MemberSearch />
+        </div>
+
+        {/* Mobile overflow menu */}
+        {showMobileMenu && (
+          <div className="sm:hidden border-t border-border/40 bg-white/95 backdrop-blur-xl px-4 py-3 flex flex-col gap-2">
+            <button onClick={() => { handleExport(); setShowMobileMenu(false); }} className="w-full text-sm font-medium rounded-xl border border-border/60 bg-white px-4 py-2.5 text-left shadow-sm active:bg-muted">Export JSON</button>
+            <button onClick={() => { fileRef.current?.click(); setShowMobileMenu(false); }} className="w-full text-sm font-medium rounded-xl border border-border/60 bg-white px-4 py-2.5 text-left shadow-sm active:bg-muted">Import JSON</button>
+            <button onClick={() => { setConfirmingReset(true); setShowMobileMenu(false); }} className="w-full text-sm font-medium rounded-xl border border-border/60 bg-white px-4 py-2.5 text-left shadow-sm active:bg-muted text-destructive">Reset to seed data</button>
+          </div>
+        )}
+
+        <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImport(f); e.target.value = ""; }} />
+
+        {/* Birthdays panel — full-width on mobile, anchored on desktop */}
+        {showBirthdays && (
+          <div className="absolute left-0 right-0 sm:left-auto sm:right-4 sm:w-80 top-full z-50 shadow-xl sm:shadow-lg">
+            <BirthdaysPanel />
+          </div>
+        )}
+
+        {/* Add member form */}
         {adding && (
-          <div className="max-w-7xl mx-auto px-6 pb-3">
+          <div className="px-4 pb-3">
             <form onSubmit={submitAdd} className="flex items-center gap-2">
               <input
                 autoFocus
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="New member name"
-                className="flex-1 max-w-sm rounded-full border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                 maxLength={120}
                 data-testid="new-member-name"
               />
-              <button type="submit" className="text-xs rounded-full bg-primary text-primary-foreground px-4 py-2 hover:opacity-90 transition">Create</button>
-              <button type="button" onClick={() => { setAdding(false); setNewName(""); }} className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition">Cancel</button>
+              <button type="submit" className="text-xs rounded-full bg-primary text-primary-foreground px-4 py-2 hover:opacity-90 transition shrink-0">Create</button>
+              <button type="button" onClick={() => { setAdding(false); setNewName(""); }} className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition shrink-0">Cancel</button>
             </form>
           </div>
         )}
+
+        {/* Confirm reset */}
         {confirmingReset && (
-          <div className="max-w-7xl mx-auto px-6 pb-3">
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-4 py-2">
+          <div className="px-4 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3">
               <span className="text-sm">Reset to seed data? Your edits will be lost.</span>
-              <div className="flex items-center gap-2">
-                <button onClick={doReset} className="text-xs rounded-full bg-destructive text-destructive-foreground px-4 py-2 hover:opacity-90 transition">Confirm reset</button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={doReset} className="text-xs rounded-full bg-destructive text-destructive-foreground px-4 py-2 hover:opacity-90 transition">Confirm</button>
                 <button onClick={() => setConfirmingReset(false)} className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition">Cancel</button>
               </div>
             </div>
           </div>
         )}
+
         {msg && (
-          <div className="max-w-7xl mx-auto px-6 pb-2 text-xs text-muted-foreground">
-            {msg}
-          </div>
+          <div className="px-4 pb-2 text-xs text-muted-foreground">{msg}</div>
         )}
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        <section className="grid grid-cols-3 gap-4">
-          {[
-            { label: "Members", value: total },
-            { label: "Generations", value: generations },
-            {
-              label: "Newborns",
-              value: family.filter(
-                (m) =>
-                  m.dob &&
-                  new Date().getFullYear() - new Date(m.dob).getFullYear() <= 3,
-              ).length,
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="rounded-2xl border border-border bg-[var(--gradient-card)] p-4 shadow-[var(--shadow-soft)]"
-            >
-              <div className="text-2xl font-bold">{s.value}</div>
-              <div className="text-xs text-muted-foreground">{s.label}</div>
-            </div>
-          ))}
-        </section>
-
-        <div className="grid lg:grid-cols-[1fr_300px] gap-6 items-start">
-          <section className="min-w-0">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Family tree</h2>
-              <p className="text-xs text-muted-foreground">
-                Click any card to expand · auto-fits to screen
-              </p>
-            </div>
+      <main className="flex-1 flex flex-col w-full min-h-0">
+          <section className="flex-1 flex flex-col min-h-0">
             <FamilyTree nodes={forest} />
           </section>
-
-          <aside className="space-y-4 lg:sticky lg:top-24">
-            <BirthdaysPanel />
-            <div className="rounded-2xl border border-dashed border-border bg-card/40 p-4 text-xs text-muted-foreground leading-relaxed">
-              💡 Edits save in your browser. Use{" "}
-              <strong>Export</strong> to download a JSON backup, or{" "}
-              <strong>Import</strong> to restore one. Click any card → "Edit"
-              for full details.{" "}
-              <Link to="/" className="underline">Open a member</Link> to manage
-              the family.
-            </div>
-          </aside>
-        </div>
       </main>
-
-      <footer className="border-t border-border mt-12 py-6 text-center text-xs text-muted-foreground">
-        Made with care · {new Date().getFullYear()}
-      </footer>
     </div>
   );
 }

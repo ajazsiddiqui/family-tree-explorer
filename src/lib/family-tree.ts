@@ -2,7 +2,7 @@ import type { FamilyMember } from "@/data/family";
 
 export interface TreeNode {
   member: FamilyMember;
-  spouse?: FamilyMember;
+  spouses: FamilyMember[];
   children: TreeNode[];
 }
 
@@ -14,7 +14,6 @@ export function buildForest(members: FamilyMember[]): TreeNode[] {
   const map = byId(members);
   const usedAsSpouse = new Set<string>();
 
-  // Children grouped by primary parent (the parent that is a blood descendant if both are in the family)
   const childrenOf = new Map<string, FamilyMember[]>();
   for (const m of members) {
     const parentId = m.fatherId ?? m.motherId;
@@ -23,32 +22,39 @@ export function buildForest(members: FamilyMember[]): TreeNode[] {
     childrenOf.get(parentId)!.push(m);
   }
 
-  // Decide roots: members with no parents (top of tree)
   const roots = members.filter((m) => !m.fatherId && !m.motherId);
 
-  // To avoid duplicating spouses as separate roots: if a root's spouse is also a root,
-  // we keep the one referenced first and mark the other as spouse.
   const buildNode = (member: FamilyMember): TreeNode => {
-    const spouse = member.spouseId ? map[member.spouseId] : undefined;
-    if (spouse) usedAsSpouse.add(spouse.id);
+    const spouses = (member.spouseIds ?? [])
+      .map((id) => map[id])
+      .filter(Boolean) as FamilyMember[];
+    spouses.forEach((s) => usedAsSpouse.add(s.id));
 
-    // Children are those whose father OR mother is this member or the spouse
     const childIds = new Set<string>();
     const addKids = (parentId: string) => {
       (childrenOf.get(parentId) ?? []).forEach((c) => childIds.add(c.id));
     };
     addKids(member.id);
-    if (spouse) addKids(spouse.id);
+    for (const sp of spouses) addKids(sp.id);
 
-    const kids = Array.from(childIds)
+    const allKids = Array.from(childIds)
       .map((id) => map[id])
-      .filter(Boolean)
-      .sort((a, b) => (a.dob ?? "").localeCompare(b.dob ?? ""));
+      .filter(Boolean) as FamilyMember[];
+    allKids.sort((a, b) => (a.dob ?? "").localeCompare(b.dob ?? ""));
+
+    // With multiple wives, group children by mother so each wife's children stay together
+    let orderedKids = allKids;
+    if (spouses.length > 1) {
+      const grouped: FamilyMember[] = [];
+      for (const sp of spouses) grouped.push(...allKids.filter((k) => k.motherId === sp.id));
+      grouped.push(...allKids.filter((k) => !spouses.some((sp) => sp.id === k.motherId)));
+      orderedKids = grouped;
+    }
 
     return {
       member,
-      spouse,
-      children: kids.map(buildNode),
+      spouses,
+      children: orderedKids.map(buildNode),
     };
   };
 
@@ -75,8 +81,10 @@ export function getParents(members: FamilyMember[], m: FamilyMember) {
   };
 }
 
-export function getSpouse(members: FamilyMember[], m: FamilyMember) {
-  return m.spouseId ? findMember(members, m.spouseId) : undefined;
+export function getSpouses(members: FamilyMember[], m: FamilyMember): FamilyMember[] {
+  return (m.spouseIds ?? [])
+    .map((id) => findMember(members, id))
+    .filter(Boolean) as FamilyMember[];
 }
 
 export function formatDate(iso?: string) {

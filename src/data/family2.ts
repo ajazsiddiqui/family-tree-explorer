@@ -12,11 +12,10 @@ export interface FamilyMember {
   profession?: string;
   voterId?: string;
   bio?: string;
-  location?: string;
   photo?: string; // URL or emoji
   fatherId?: string;
   motherId?: string;
-  spouseIds?: string[];
+  spouseId?: string;
   alive?: boolean;
 }
 
@@ -26,7 +25,7 @@ export const family: FamilyMember[] = [
     name: "Hamidullah Siddiqui",
     gender: "male",
     occupation: "Grandfather",
-    spouseIds: ["nazmunnisa-siddiqui"],
+    spouseId: "nazmunnisa-siddiqui",
     alive: false,
   },
   {
@@ -34,7 +33,7 @@ export const family: FamilyMember[] = [
     name: "Nazmunnisa Siddiqui",
     gender: "female",
     occupation: "Grandmother",
-    spouseIds: ["hamidullah-siddiqui"],
+    spouseId: "hamidullah-siddiqui",
     alive: false,
   },
   {
@@ -43,14 +42,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "hamidullah-siddiqui",
     motherId: "nazmunnisa-siddiqui",
-    spouseIds: ["shamshul-haq-spouse"],
+    spouseId: "shamshul-haq-spouse",
     alive: true,
   },
   {
     id: "shamshul-haq-spouse",
     name: "Ummat",
     gender: "female",
-    spouseIds: ["shamshul-haq"],
+    spouseId: "shamshul-haq",
     alive: true,
   },
   {
@@ -59,7 +58,7 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "shamshul-haq",
     motherId: "shamshul-haq-spouse",
-    spouseIds: ["nigar-sultana"],
+    spouseId: "nigar-sultana",
     alive: true,
   },
   {
@@ -68,14 +67,14 @@ export const family: FamilyMember[] = [
     gender: "female",
     fatherId: "shamshul-haq",
     motherId: "shamshul-haq-spouse",
-    spouseIds: ["amjad-ali"],
+    spouseId: "amjad-ali",
     alive: true,
   },
   {
     id: "amjad-ali",
     name: "Amjad Ali",
     gender: "male",
-    spouseIds: ["sarifun-nisa"],
+    spouseId: "sarifun-nisa",
     alive: true,
   },
   {
@@ -84,21 +83,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "hamidullah-siddiqui",
     motherId: "nazmunnisa-siddiqui",
-    spouseIds: ["shamsul-zuha-first-wife", "akbari-khatoon"],
-    alive: true,
-  },
-  {
-    id: "shamsul-zuha-first-wife",
-    name: "Hazra Khatoon",
-    gender: "female",
-    spouseIds: ["shamsul-zuha"],
+    spouseId: "akbari-khatoon",
     alive: true,
   },
   {
     id: "akbari-khatoon",
     name: "Akbari Khatoon",
     gender: "female",
-    spouseIds: ["shamsul-zuha"],
+    spouseId: "shamsul-zuha",
     alive: true,
   },
   {
@@ -106,15 +98,15 @@ export const family: FamilyMember[] = [
     name: "Asrar Siddiqui",
     gender: "male",
     fatherId: "shamsul-zuha",
-    motherId: "shamsul-zuha-first-wife",
-    spouseIds: ["razia-bano"],
+    motherId: "akbari-khatoon",
+    spouseId: "razia-bano",
     alive: true,
   },
   {
     id: "razia-bano",
     name: "Razia Bano",
     gender: "female",
-    spouseIds: ["asrar-siddiqui"],
+    spouseId: "asrar-siddiqui",
     alive: true,
   },
   {
@@ -122,8 +114,8 @@ export const family: FamilyMember[] = [
     name: "Abrar Siddiqui",
     gender: "male",
     fatherId: "shamsul-zuha",
-    motherId: "shamsul-zuha-first-wife",
-    spouseIds: ["nasreen-bano"],
+    motherId: "akbari-khatoon",
+    spouseId: "nasreen-bano",
     alive: true,
   },
   {
@@ -131,7 +123,7 @@ export const family: FamilyMember[] = [
     name: "Kaisar",
     gender: "male",
     fatherId: "shamsul-zuha",
-    motherId: "shamsul-zuha-first-wife",
+    motherId: "akbari-khatoon",
     alive: true,
   },
   {
@@ -139,7 +131,7 @@ export const family: FamilyMember[] = [
     name: "Kamar Jahan",
     gender: "female",
     fatherId: "shamsul-zuha",
-    motherId: "shamsul-zuha-first-wife",
+    motherId: "akbari-khatoon",
     alive: true,
   },
   {
@@ -204,14 +196,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "hamidullah-siddiqui",
     motherId: "nazmunnisa-siddiqui",
-    spouseIds: ["zaibunnisa"],
+    spouseId: "zaibunnisa",
     alive: true,
   },
   {
     id: "zaibunnisa",
     name: "Zaibunnisa",
     gender: "female",
-    spouseIds: ["shamsul-huda"],
+    spouseId: "shamsul-huda",
     alive: true,
   },
   {
@@ -220,14 +212,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "shamsul-huda",
     motherId: "zaibunnisa",
-    spouseIds: ["shaheen-bano-spouse"],
+    spouseId: "shaheen-bano-spouse",
     alive: true,
   },
   {
     id: "shaheen-bano-spouse",
     name: "Shaheen Bano",
     gender: "female",
-    spouseIds: ["akhlaque-siddiqui"],
+    spouseId: "akhlaque-siddiqui",
     alive: true,
   },
   {
@@ -236,7 +228,7 @@ export const family: FamilyMember[] = [
     gender: "female",
     fatherId: "shamsul-huda",
     motherId: "zaibunnisa",
-    spouseIds: ["ashfaq-siddiqui"],
+    spouseId: "ashfaq-siddiqui",
     alive: true,
   },
   {
@@ -245,14 +237,14 @@ export const family: FamilyMember[] = [
     gender: "female",
     fatherId: "shamsul-huda",
     motherId: "zaibunnisa",
-    spouseIds: ["akram-chaudhary"],
+    spouseId: "akram-chaudhary",
     alive: true,
   },
   {
     id: "akram-chaudhary",
     name: "Akram Chaudhary",
     gender: "male",
-    spouseIds: ["dilshad-bano"],
+    spouseId: "dilshad-bano",
     alive: true,
   },
   {
@@ -261,7 +253,7 @@ export const family: FamilyMember[] = [
     gender: "female",
     fatherId: "akram-chaudhary",
     motherId: "dilshad-bano",
-    spouseIds: ["saif-siddiqui"],
+    spouseId: "saif-siddiqui",
     alive: true,
   },
   {
@@ -270,14 +262,14 @@ export const family: FamilyMember[] = [
     gender: "female",
     fatherId: "shamsul-huda",
     motherId: "zaibunnisa",
-    spouseIds: ["ajaz-khan"],
+    spouseId: "ajaz-khan",
     alive: true,
   },
   {
     id: "ajaz-khan",
     name: "Ajaz Khan",
     gender: "male",
-    spouseIds: ["shehnaz-bano"],
+    spouseId: "shehnaz-bano",
     alive: true,
   },
   {
@@ -286,14 +278,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "shamsul-huda",
     motherId: "zaibunnisa",
-    spouseIds: ["najma-bano"],
+    spouseId: "najma-bano",
     alive: true,
   },
   {
     id: "najma-bano",
     name: "Najma Bano",
     gender: "female",
-    spouseIds: ["irshad-siddiqui"],
+    spouseId: "irshad-siddiqui",
     alive: true,
   },
   {
@@ -302,14 +294,14 @@ export const family: FamilyMember[] = [
     gender: "female",
     fatherId: "shamsul-huda",
     motherId: "zaibunnisa",
-    spouseIds: ["utaib-mirkar"],
+    spouseId: "utaib-mirkar",
     alive: true,
   },
   {
     id: "utaib-mirkar",
     name: "Utaib Mirkar",
     gender: "male",
-    spouseIds: ["mumtaz-bano"],
+    spouseId: "mumtaz-bano",
     alive: true,
   },
   {
@@ -318,14 +310,14 @@ export const family: FamilyMember[] = [
     gender: "female",
     fatherId: "shamsul-huda",
     motherId: "zaibunnisa",
-    spouseIds: ["afsar"],
+    spouseId: "afsar",
     alive: true,
   },
   {
     id: "afsar",
     name: "Afsar",
     gender: "male",
-    spouseIds: ["nahid-bano"],
+    spouseId: "nahid-bano",
     alive: true,
   },
   {
@@ -350,14 +342,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "hamidullah-siddiqui",
     motherId: "nazmunnisa-siddiqui",
-    spouseIds: ["nazma-khatoon"],
+    spouseId: "nazma-khatoon",
     alive: true,
   },
   {
     id: "nazma-khatoon",
     name: "Nazma Khatoon",
     gender: "female",
-    spouseIds: ["insan-ali"],
+    spouseId: "insan-ali",
     alive: true,
   },
   {
@@ -366,14 +358,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "hamidullah-siddiqui",
     motherId: "nazmunnisa-siddiqui",
-    spouseIds: ["razia-khatoon"],
+    spouseId: "razia-khatoon",
     alive: true,
   },
   {
     id: "razia-khatoon",
     name: "Razia Khatoon",
     gender: "female",
-    spouseIds: ["abdul-haq"],
+    spouseId: "abdul-haq",
     alive: true,
   },
   {
@@ -382,7 +374,7 @@ export const family: FamilyMember[] = [
     gender: "female",
     fatherId: "abdul-haq",
     motherId: "razia-khatoon",
-    spouseIds: ["abrar-siddiqui"],
+    spouseId: "abrar-siddiqui",
     alive: true,
   },
   {
@@ -431,14 +423,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "insan-ali",
     motherId: "nazma-khatoon",
-    spouseIds: ["safia-khatoon"],
+    spouseId: "safia-khatoon",
     alive: true,
   },
   {
     id: "safia-khatoon",
     name: "Safia Khatoon",
     gender: "female",
-    spouseIds: ["ajaz-ahmed-siddiqui"],
+    spouseId: "ajaz-ahmed-siddiqui",
     alive: true,
   },
   {
@@ -447,14 +439,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "insan-ali",
     motherId: "nazma-khatoon",
-    spouseIds: ["afreen-bano"],
+    spouseId: "afreen-bano",
     alive: true,
   },
   {
     id: "afreen-bano",
     name: "Afreen Bano",
     gender: "female",
-    spouseIds: ["mohd-sabir-siddiqui"],
+    spouseId: "mohd-sabir-siddiqui",
     alive: true,
   },
   {
@@ -463,14 +455,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "insan-ali",
     motherId: "nazma-khatoon",
-    spouseIds: ["sabira-khatoon"],
+    spouseId: "sabira-khatoon",
     alive: true,
   },
   {
     id: "sabira-khatoon",
     name: "Sabira Khatoon",
     gender: "female",
-    spouseIds: ["riyaz-ahmed"],
+    spouseId: "riyaz-ahmed",
     alive: true,
   },
   {
@@ -487,14 +479,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "insan-ali",
     motherId: "nazma-khatoon",
-    spouseIds: ["sana-khatoon"],
+    spouseId: "sana-khatoon",
     alive: true,
   },
   {
     id: "sana-khatoon",
     name: "Sana Khatoon",
     gender: "female",
-    spouseIds: ["mohd-danish"],
+    spouseId: "mohd-danish",
     alive: true,
   },
   {
@@ -538,8 +530,8 @@ export const family: FamilyMember[] = [
     alive: true,
   },
   {
-    id: "arhaam",
-    name: "Arhaam",
+    id: "aryan",
+    name: "Aryan",
     gender: "male",
     fatherId: "mohd-sabir-siddiqui",
     motherId: "afreen-bano",
@@ -591,14 +583,14 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "ashfaq-siddiqui",
     motherId: "nigar-sultana",
-    spouseIds: ["kulsum"],
+    spouseId: "kulsum",
     alive: true,
   },
   {
     id: "kulsum",
     name: "Kulsum",
     gender: "female",
-    spouseIds: ["saqib-siddiqui"],
+    spouseId: "saqib-siddiqui",
     alive: true,
   },
   {
@@ -607,20 +599,12 @@ export const family: FamilyMember[] = [
     gender: "male",
     fatherId: "ashfaq-siddiqui",
     motherId: "nigar-sultana",
-    spouseIds: ["susaine-chaudhary"],
+    spouseId: "susaine-chaudhary",
     alive: true,
   },
   {
-    id: "sahil-siddiqui",
-    name: "Sahil Siddiqui",
-    gender: "male",
-    fatherId: "ashfaq-siddiqui",
-    motherId: "nigar-sultana",
-    alive: true,
-  },
-  {
-    id: "saim-siddiqui",
-    name: "Saim Siddiqui",
+    id: "aqib-siddiqui",
+    name: "Aqib Siddiqui",
     gender: "male",
     fatherId: "ashfaq-siddiqui",
     motherId: "nigar-sultana",

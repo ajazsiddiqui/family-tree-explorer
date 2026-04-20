@@ -1,0 +1,258 @@
+[
+  {
+    "id": "hamidullah-siddiqui",
+    "name": "Hamidullah Siddiqui",
+    "gender": "male",
+    "occupation": "Grandfather",
+    "spouseId": "nazmunnisa-siddiqui",
+    "alive": false
+  },
+  {
+    "id": "nazmunnisa-siddiqui",
+    "name": "Nazmunnisa Siddiqui",
+    "gender": "female",
+    "occupation": "Grandmother",
+    "spouseId": "hamidullah-siddiqui",
+    "alive": false
+  },
+  {
+    "id": "shamshul-haq",
+    "name": "Shamshul Haq",
+    "gender": "male",
+    "fatherId": "hamidullah-siddiqui",
+    "motherId": "nazmunnisa-siddiqui",
+    "spouseId": "shamshul-haq-spouse",
+    "alive": true
+  },
+  {
+    "id": "shamshul-haq-spouse",
+    "name": "Unknown",
+    "gender": "female",
+    "spouseId": "shamshul-haq",
+    "alive": true
+  },
+  {
+    "id": "shamsul-zuha",
+    "name": "Shamsul Zuha",
+    "gender": "male",
+    "fatherId": "hamidullah-siddiqui",
+    "motherId": "nazmunnisa-siddiqui",
+    "spouseId": "shamsul-zuha-spouse",
+    "alive": true
+  },
+  {
+    "id": "shamsul-zuha-spouse",
+    "name": "Unknown",
+    "gender": "female",
+    "spouseId": "shamsul-zuha",
+    "alive": true
+  },
+  {
+    "id": "shamsul-huda",
+    "name": "Shamsul Huda",
+    "gender": "male",
+    "fatherId": "hamidullah-siddiqui",
+    "motherId": "nazmunnisa-siddiqui",
+    "spouseId": "zaibunnisa",
+    "alive": true
+  },
+  {
+    "id": "zaibunnisa",
+    "name": "Zaibunnisa",
+    "gender": "female",
+    "spouseId": "shamsul-huda",
+    "alive": true
+  },
+  {
+    "id": "insan-ali",
+    "name": "Insan Ali",
+    "gender": "male",
+    "fatherId": "hamidullah-siddiqui",
+    "motherId": "nazmunnisa-siddiqui",
+    "spouseId": "nazma-khatoon",
+    "alive": true
+  },
+  {
+    "id": "nazma-khatoon",
+    "name": "Nazma Khatoon",
+    "gender": "female",
+    "spouseId": "insan-ali",
+    "alive": true
+  },
+  {
+    "id": "abdul-haq",
+    "name": "Abdul Haq",
+    "gender": "male",
+    "fatherId": "hamidullah-siddiqui",
+    "motherId": "nazmunnisa-siddiqui",
+    "spouseId": "razia-khatoon",
+    "alive": true
+  },
+  {
+    "id": "razia-khatoon",
+    "name": "Razia Khatoon",
+    "gender": "female",
+    "spouseId": "abdul-haq",
+    "alive": true
+  },
+  {
+    "id": "ajaz-ahmed-siddiqui",
+    "name": "Ajaz Ahmed Siddiqui",
+    "gender": "male",
+    "fatherId": "insan-ali",
+    "motherId": "nazma-khatoon",
+    "spouseId": "safia-khatoon",
+    "alive": true
+  },
+  {
+    "id": "safia-khatoon",
+    "name": "Safia Khatoon",
+    "gender": "female",
+    "spouseId": "ajaz-ahmed-siddiqui",
+    "alive": true
+  },
+  {
+    "id": "mohd-sabir-siddiqui",
+    "name": "Mohd Sabir Siddiqui",
+    "gender": "male",
+    "fatherId": "insan-ali",
+    "motherId": "nazma-khatoon",
+    "spouseId": "afreen-bano",
+    "alive": true
+  },
+  {
+    "id": "afreen-bano",
+    "name": "Afreen Bano",
+    "gender": "female",
+    "spouseId": "mohd-sabir-siddiqui",
+    "alive": true
+  },
+  {
+    "id": "riyaz-ahmed",
+    "name": "Riyaz Ahmed",
+    "gender": "male",
+    "fatherId": "insan-ali",
+    "motherId": "nazma-khatoon",
+    "spouseId": "sabira-khatoon",
+    "alive": true
+  },
+  {
+    "id": "sabira-khatoon",
+    "name": "Sabira Khatoon",
+    "gender": "female",
+    "spouseId": "riyaz-ahmed",
+    "alive": true
+  },
+  {
+    "id": "mohd-shebaz",
+    "name": "Mohd Shebaz",
+    "gender": "male",
+    "fatherId": "insan-ali",
+    "motherId": "nazma-khatoon",
+    "alive": true
+  },
+  {
+    "id": "mohd-danish",
+    "name": "Mohd Danish",
+    "gender": "male",
+    "fatherId": "insan-ali",
+    "motherId": "nazma-khatoon",
+    "spouseId": "sana-khatoon",
+    "alive": true
+  },
+  {
+    "id": "sana-khatoon",
+    "name": "Sana Khatoon",
+    "gender": "female",
+    "spouseId": "mohd-danish",
+    "alive": true
+  },
+  {
+    "id": "aisha",
+    "name": "Aisha",
+    "gender": "female",
+    "fatherId": "ajaz-ahmed-siddiqui",
+    "motherId": "safia-khatoon",
+    "alive": true
+  },
+  {
+    "id": "muhammed",
+    "name": "Muhammed",
+    "gender": "male",
+    "fatherId": "ajaz-ahmed-siddiqui",
+    "motherId": "safia-khatoon",
+    "alive": true
+  },
+  {
+    "id": "ali",
+    "name": "Ali",
+    "gender": "male",
+    "fatherId": "ajaz-ahmed-siddiqui",
+    "motherId": "safia-khatoon",
+    "alive": true
+  },
+  {
+    "id": "nushayba",
+    "name": "Nushayba",
+    "gender": "female",
+    "fatherId": "ajaz-ahmed-siddiqui",
+    "motherId": "safia-khatoon",
+    "alive": true
+  },
+  {
+    "id": "ahmed",
+    "name": "Ahmed",
+    "gender": "male",
+    "fatherId": "mohd-sabir-siddiqui",
+    "motherId": "afreen-bano",
+    "alive": true
+  },
+  {
+    "id": "aryan",
+    "name": "Aryan",
+    "gender": "male",
+    "fatherId": "mohd-sabir-siddiqui",
+    "motherId": "afreen-bano",
+    "alive": true
+  },
+  {
+    "id": "ayat",
+    "name": "Ayat",
+    "gender": "female",
+    "fatherId": "mohd-sabir-siddiqui",
+    "motherId": "afreen-bano",
+    "alive": true
+  },
+  {
+    "id": "huzaif",
+    "name": "Huzaif",
+    "gender": "male",
+    "fatherId": "riyaz-ahmed",
+    "motherId": "sabira-khatoon",
+    "alive": true
+  },
+  {
+    "id": "fatima",
+    "name": "Fatima",
+    "gender": "female",
+    "fatherId": "riyaz-ahmed",
+    "motherId": "sabira-khatoon",
+    "alive": true
+  },
+  {
+    "id": "rabia",
+    "name": "Rabia",
+    "gender": "female",
+    "fatherId": "riyaz-ahmed",
+    "motherId": "sabira-khatoon",
+    "alive": true
+  },
+  {
+    "id": "umar",
+    "name": "Umar",
+    "gender": "male",
+    "fatherId": "riyaz-ahmed",
+    "motherId": "sabira-khatoon",
+    "alive": true
+  }
+]

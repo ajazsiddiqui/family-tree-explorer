@@ -5,7 +5,7 @@ import {
   findMember,
   getChildren,
   getParents,
-  getSpouse,
+  getSpouses,
   formatDate,
   ageOf,
   initials,
@@ -91,7 +91,7 @@ function MemberDetail() {
   }
 
   const { father, mother } = getParents(family, member);
-  const spouse = getSpouse(family, member);
+  const spouses = getSpouses(family, member);
   const children = getChildren(family, member.id);
   const age = ageOf(member);
   const gen = generationOf(family, member.id);
@@ -106,8 +106,9 @@ function MemberDetail() {
     const name = childName.trim();
     if (!name) return;
     const childId = newId("c");
-    const fatherId = member.gender === "male" ? member.id : spouse?.gender === "male" ? spouse.id : member.id;
-    const motherId = member.gender === "female" ? member.id : spouse?.gender === "female" ? spouse.id : undefined;
+    const primarySpouse = spouses[0];
+    const fatherId = member.gender === "male" ? member.id : primarySpouse?.gender === "male" ? primarySpouse.id : member.id;
+    const motherId = member.gender === "female" ? member.id : primarySpouse?.gender === "female" ? primarySpouse.id : undefined;
     familyStore.upsert({
       id: childId,
       name,
@@ -247,8 +248,9 @@ function MemberDetail() {
               { label: "Date of birth", value: formatDate(member.dob) },
               { label: "Birth place", value: member.birthPlace ?? "—" },
               { label: "Date of marriage", value: formatDate(member.dom) },
-              { label: "Spouse", value: spouse?.name ?? "—" },
+              { label: spouses.length > 1 ? "Spouses" : "Spouse", value: spouses.length ? spouses.map(s => s.name).join(", ") : "—" },
               { label: "Profession", value: member.profession ?? member.occupation ?? "—" },
+              { label: "Location", value: member.location ?? "—" },
               { label: "Voter ID", value: member.voterId ?? "—" },
               ...(member.dod
                 ? [{ label: "Date of passing", value: formatDate(member.dod) }]
@@ -269,7 +271,7 @@ function MemberDetail() {
 
         {/* Navigation: up (parents/spouse) and down (children) */}
         <section className="mt-8 space-y-4">
-          {(father || mother || spouse) && (
+          {(father || mother || spouses.length > 0) && (
             <div>
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
                 ↑ Move upward
@@ -277,7 +279,7 @@ function MemberDetail() {
               <div className="grid sm:grid-cols-3 gap-3">
                 {father && <NavCard label="Father" member={father} />}
                 {mother && <NavCard label="Mother" member={mother} />}
-                {spouse && <NavCard label="Spouse" member={spouse} />}
+                {spouses.map((sp) => <NavCard key={sp.id} label="Spouse" member={sp} />)}
               </div>
             </div>
           )}
@@ -332,16 +334,13 @@ function EditForm({
       profession: form.profession?.trim() || undefined,
       voterId: form.voterId?.trim() || undefined,
       bio: form.bio?.trim() || undefined,
+      location: form.location?.trim() || undefined,
       photo: form.photo?.trim() || undefined,
       fatherId: form.fatherId || undefined,
       motherId: form.motherId || undefined,
-      spouseId: form.spouseId || undefined,
+      spouseIds: form.spouseIds?.length ? form.spouseIds : undefined,
     };
     familyStore.upsert(cleaned);
-    // sync spouse link explicitly (covers clearing previous spouse)
-    if (cleaned.spouseId !== member.spouseId) {
-      familyStore.linkSpouse(cleaned.id, cleaned.spouseId);
-    }
     onClose();
   };
 
@@ -392,6 +391,9 @@ function EditForm({
         <Field label="Voter ID">
           <input value={form.voterId ?? ""} onChange={(e) => set("voterId", e.target.value)} className={inputCls} maxLength={40} />
         </Field>
+        <Field label="Location">
+          <input value={form.location ?? ""} onChange={(e) => set("location", e.target.value)} className={inputCls} maxLength={200} />
+        </Field>
         <Field label="Photo URL">
           <input value={form.photo ?? ""} onChange={(e) => set("photo", e.target.value)} className={inputCls} maxLength={500} />
         </Field>
@@ -400,9 +402,6 @@ function EditForm({
         </Field>
         <Field label="Mother">
           <PersonSelect value={form.motherId} onChange={(v) => set("motherId", v)} options={candidates.filter((m) => m.gender !== "male")} />
-        </Field>
-        <Field label="Spouse">
-          <PersonSelect value={form.spouseId} onChange={(v) => set("spouseId", v)} options={candidates} />
         </Field>
         <Field label="Status">
           <select
@@ -415,6 +414,11 @@ function EditForm({
           </select>
         </Field>
       </div>
+      <SpousesField
+        spouseIds={form.spouseIds ?? []}
+        candidates={candidates}
+        onChange={(ids) => set("spouseIds", ids.length ? ids : undefined)}
+      />
       <Field label="Bio">
         <textarea
           value={form.bio ?? ""}
@@ -469,5 +473,60 @@ function PersonSelect({
         </option>
       ))}
     </select>
+  );
+}
+
+function SpousesField({
+  spouseIds,
+  candidates,
+  onChange,
+}: {
+  spouseIds: string[];
+  candidates: FamilyMember[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const available = candidates.filter((c) => !spouseIds.includes(c.id));
+
+  const remove = (id: string) => onChange(spouseIds.filter((s) => s !== id));
+  const add = (id: string) => { if (id) { onChange([...spouseIds, id]); setAdding(false); } };
+
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Spouses</div>
+      <div className="flex flex-col gap-1.5">
+        {spouseIds.map((id) => {
+          const m = candidates.find((c) => c.id === id) ?? { id, name: id };
+          return (
+            <div key={id} className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
+              <span>{m.name}</span>
+              <button type="button" onClick={() => remove(id)} className="text-muted-foreground hover:text-destructive transition-colors text-xs ml-2">✕</button>
+            </div>
+          );
+        })}
+        {adding ? (
+          <select
+            autoFocus
+            className={inputCls}
+            defaultValue=""
+            onChange={(e) => add(e.target.value)}
+            onBlur={() => setAdding(false)}
+          >
+            <option value="">— select spouse —</option>
+            {available.map((m) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="text-xs rounded-lg border border-dashed border-border px-3 py-2 text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors text-left"
+          >
+            + Add spouse
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
