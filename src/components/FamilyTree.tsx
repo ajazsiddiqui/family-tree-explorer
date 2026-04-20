@@ -108,7 +108,7 @@ export function FamilyTree({ nodes, highlightId }: Props) {
     const naturalH = inner.scrollHeight;
     const availW = wrap.clientWidth - 32;
     const availH = Math.min(window.innerHeight * 0.78, 900);
-    const s = Math.min(1, availW / naturalW, availH / naturalH);
+    const s = Math.max(0.55, Math.min(1, availW / naturalW, availH / naturalH));
     setScale(s);
   };
 
