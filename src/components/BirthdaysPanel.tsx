@@ -1,12 +1,17 @@
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { family } from "@/data/family";
 import { upcomingBirthdays, initials, ageOf } from "@/lib/family-tree";
 
 export function BirthdaysPanel() {
-  const items = upcomingBirthdays(family, 90).slice(0, 6);
-  if (!items.length) return null;
+  // Compute on client only — depends on "today", which differs SSR vs CSR.
+  const [items, setItems] = useState<ReturnType<typeof upcomingBirthdays>>([]);
+  useEffect(() => {
+    setItems(upcomingBirthdays(family, 90).slice(0, 6));
+  }, []);
+
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)]">
+    <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)] min-h-[120px]">
       <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
         🎉 Upcoming birthdays
       </h3>
