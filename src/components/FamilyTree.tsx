@@ -8,9 +8,11 @@ interface Props {
 }
 
 const CARD_W = 120;
+const CARD_H = 150; // base card height (collapsed)
+const CARD_H_EXPANDED = 250; // expanded card height (with details + button)
 const COUPLE_GAP = 14; // includes heart space
 const SIBLING_GAP = 18;
-const ROW_GAP = 90; // vertical space between generations (gap for connectors)
+const ROW_GAP = 110; // vertical space between generations (gap for connectors)
 
 interface PositionedNode {
   node: TreeNode;
