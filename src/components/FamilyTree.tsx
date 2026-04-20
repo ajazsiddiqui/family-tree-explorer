@@ -8,9 +8,11 @@ interface Props {
 }
 
 const CARD_W = 120;
+const CARD_H = 150; // base card height (collapsed)
+const CARD_H_EXPANDED = 250; // expanded card height (with details + button)
 const COUPLE_GAP = 14; // includes heart space
 const SIBLING_GAP = 18;
-const ROW_GAP = 90; // vertical space between generations (gap for connectors)
+const ROW_GAP = 110; // vertical space between generations (gap for connectors)
 
 interface PositionedNode {
   node: TreeNode;
@@ -65,23 +67,6 @@ function layout(node: TreeNode, x: number, y: number): PositionedNode {
   };
 }
 
-function flatten(p: PositionedNode, acc: PositionedNode[] = []): PositionedNode[] {
-  acc.push(p);
-  // re-derive children with proper x relative to parent's pairCenter
-  const childY = p.y + 180 + ROW_GAP;
-  let cursorX = p.x - (p.childCenters.length
-    ? (p.childCenters[p.childCenters.length - 1] - p.childCenters[0]) / 2 + pairWidth(p.node.children[0]) / 2
-    : 0);
-  // simpler: re-layout children with correct offsets using stored centers
-  for (let i = 0; i < p.node.children.length; i++) {
-    const child = p.node.children[i];
-    const cw = subtreeWidth(child);
-    const cx = p.childCenters[i] - pairWidth(child) / 2;
-    const childPos = layoutAt(child, cx, childY);
-    flatten(childPos, acc);
-  }
-  return acc;
-}
 
 function subtreeWidth(node: TreeNode): number {
   if (node.children.length === 0) return pairWidth(node);
@@ -91,9 +76,21 @@ function subtreeWidth(node: TreeNode): number {
   return Math.max(pairWidth(node), w);
 }
 
-function layoutAt(node: TreeNode, x: number, y: number): PositionedNode {
+function nodeHeight(node: TreeNode, isExpanded: (id: string) => boolean): number {
+  const a = isExpanded(node.member.id);
+  const b = node.spouse ? isExpanded(node.spouse.id) : false;
+  return a || b ? CARD_H_EXPANDED : CARD_H;
+}
+
+function layoutAt(
+  node: TreeNode,
+  x: number,
+  y: number,
+  isExpanded: (id: string) => boolean,
+): PositionedNode {
   const ownW = pairWidth(node);
   const subW = subtreeWidth(node);
+  const h = nodeHeight(node, isExpanded);
 
   if (node.children.length === 0) {
     return {
@@ -106,19 +103,16 @@ function layoutAt(node: TreeNode, x: number, y: number): PositionedNode {
     };
   }
 
-  // children laid out from x, stretched across subW
-  const childY = y + 180 + ROW_GAP;
-  let cursor = x + Math.max(0, (ownW - subW) / 2); // if own is wider than children
-  // but we want children to span exactly subW starting at x
+  const childY = y + h + ROW_GAP;
   let totalChildW = 0;
   for (const c of node.children) totalChildW += subtreeWidth(c) + SIBLING_GAP;
   totalChildW -= SIBLING_GAP;
   const startX = x + (subW - totalChildW) / 2;
-  cursor = startX;
+  let cursor = startX;
   const centers: number[] = [];
   for (const c of node.children) {
     const cw = subtreeWidth(c);
-    const cPos = layoutAt(c, cursor, childY);
+    const cPos = layoutAt(c, cursor, childY, isExpanded);
     centers.push(cPos.pairCenter);
     cursor += cw + SIBLING_GAP;
   }
@@ -133,9 +127,14 @@ function layoutAt(node: TreeNode, x: number, y: number): PositionedNode {
   };
 }
 
-function collectAll(p: PositionedNode, acc: PositionedNode[] = []): PositionedNode[] {
+function collectAll(
+  p: PositionedNode,
+  isExpanded: (id: string) => boolean,
+  acc: PositionedNode[] = [],
+): PositionedNode[] {
   acc.push(p);
-  const childY = p.y + 180 + ROW_GAP;
+  const h = nodeHeight(p.node, isExpanded);
+  const childY = p.y + h + ROW_GAP;
   let totalChildW = 0;
   for (const c of p.node.children) totalChildW += subtreeWidth(c) + SIBLING_GAP;
   totalChildW -= SIBLING_GAP;
@@ -143,8 +142,8 @@ function collectAll(p: PositionedNode, acc: PositionedNode[] = []): PositionedNo
   let cursor = startX;
   for (const c of p.node.children) {
     const cw = subtreeWidth(c);
-    const childPos = layoutAt(c, cursor, childY);
-    collectAll(childPos, acc);
+    const childPos = layoutAt(c, cursor, childY, isExpanded);
+    collectAll(childPos, isExpanded, acc);
     cursor += cw + SIBLING_GAP;
   }
   return acc;
@@ -165,20 +164,20 @@ export function FamilyTree({ nodes, highlightId }: Props) {
       return n;
     });
 
+  const isExpanded = (id: string) => expanded.has(id);
+
   // layout the forest horizontally
   let xCursor = 0;
   const positions: PositionedNode[] = [];
   for (const root of nodes) {
     const w = subtreeWidth(root);
-    const p = layoutAt(root, xCursor, 0);
-    collectAll(p, positions);
+    const p = layoutAt(root, xCursor, 0, isExpanded);
+    collectAll(p, isExpanded, positions);
     xCursor += w + SIBLING_GAP * 4;
   }
   const totalW = xCursor - SIBLING_GAP * 4;
   const totalH = Math.max(
-    ...positions.map(
-      (p) => p.y + 180 + (expanded.has(p.node.member.id) || (p.node.spouse && expanded.has(p.node.spouse.id)) ? 110 : 0),
-    ),
+    ...positions.map((p) => p.y + nodeHeight(p.node, isExpanded) + 20),
   );
 
   // auto-fit
@@ -205,9 +204,10 @@ export function FamilyTree({ nodes, highlightId }: Props) {
   const connectors: { d: string; key: string }[] = [];
   for (const p of positions) {
     if (p.node.children.length === 0) continue;
-    const parentBottomY = p.y + 130; // bottom of pair
-    const busY = p.y + 180 + ROW_GAP / 2; // mid of gap
-    const childTopY = p.y + 180 + ROW_GAP;
+    const h = nodeHeight(p.node, isExpanded);
+    const parentBottomY = p.y + h;
+    const busY = p.y + h + ROW_GAP / 2;
+    const childTopY = p.y + h + ROW_GAP;
 
     // trunk down from parent center to bus
     connectors.push({
