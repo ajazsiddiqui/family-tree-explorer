@@ -83,12 +83,21 @@
   --input: oklch(0.92 0.02 95);
   --ring: oklch(0.72 0.11 200);
 
-  --branch: oklch(0.85 0.05 200);
-  --gradient-soft: linear-gradient(135deg, oklch(0.96 0.04 200) 0%, oklch(0.95 0.05 340) 50%, oklch(0.95 0.05 140) 100%);
-  --gradient-card: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.98 0.012 95) 100%);
-  --shadow-soft: 0 4px 20px -4px oklch(0.6 0.05 270 / 0.12);
-  --shadow-pop: 0 12px 40px -8px oklch(0.6 0.08 200 / 0.25);
+  --branch: oklch(0.78 0.13 65);
+  --branch-soft: oklch(0.88 0.08 65);
+  --gradient-soft: linear-gradient(135deg, oklch(0.985 0.015 85) 0%, oklch(0.98 0.022 60) 100%);
+  --gradient-card: linear-gradient(180deg, oklch(1 0 0) 0%, oklch(0.99 0.008 95) 100%);
+  --shadow-soft: 0 4px 16px -6px oklch(0.6 0.05 270 / 0.12);
+  --shadow-pop: 0 14px 40px -10px oklch(0.6 0.08 200 / 0.28);
   --transition-smooth: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Branch tints (lineage-based pastel families) */
+  --tint-1: oklch(0.94 0.05 35);
+  --tint-2: oklch(0.94 0.06 220);
+  --tint-3: oklch(0.93 0.07 145);
+  --tint-4: oklch(0.93 0.06 320);
+  --tint-5: oklch(0.94 0.07 80);
+  --tint-6: oklch(0.93 0.06 180);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
