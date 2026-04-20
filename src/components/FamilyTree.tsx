@@ -226,24 +226,40 @@ export function FamilyTree({ nodes, highlightId }: Props) {
     }
   }
 
-  // Build connector path data — one smooth S-curve per parent→child link
+  // Build connector path data — orthogonal trunk→bus→drop with rounded corners
   const connectors: { d: string; key: string; highlighted: boolean }[] = [];
   for (const p of positions) {
     if (p.node.children.length === 0) continue;
     const h = nodeHeight(p.node, isExpanded);
-    const y1 = p.y + h;
-    const y2 = p.y + h + ROW_GAP;
-    const dy = y2 - y1;
+    const y1 = p.y + h; // parent bottom
+    const busY = p.y + h + ROW_GAP / 2;
+    const y2 = p.y + h + ROW_GAP; // child top
     for (let i = 0; i < p.childCenters.length; i++) {
       const cx = p.childCenters[i];
-      const c1y = y1 + dy * 0.55;
-      const c2y = y2 - dy * 0.55;
       const key = `link-${p.node.member.id}-${i}`;
-      connectors.push({
-        key,
-        d: `M ${p.x} ${y1} C ${p.x} ${c1y}, ${cx} ${c2y}, ${cx} ${y2}`,
-        highlighted: highlightedLinks.has(key),
-      });
+      const dx = cx - p.x;
+      const adx = Math.abs(dx);
+      // limit radius so it never exceeds available space
+      const r = Math.min(CORNER_R, adx / 2, (busY - y1), (y2 - busY));
+      let d: string;
+      if (adx < 1) {
+        // straight line, no corners needed
+        d = `M ${p.x} ${y1} L ${cx} ${y2}`;
+      } else {
+        const sx = dx > 0 ? 1 : -1; // horizontal direction
+        // path: down to (busY - r), arc into horizontal, across to near cx, arc down, then down to y2
+        d = [
+          `M ${p.x} ${y1}`,
+          `L ${p.x} ${busY - r}`,
+          // first quarter arc: turn from down → horizontal toward child
+          `Q ${p.x} ${busY} ${p.x + sx * r} ${busY}`,
+          `L ${cx - sx * r} ${busY}`,
+          // second quarter arc: turn from horizontal → down
+          `Q ${cx} ${busY} ${cx} ${busY + r}`,
+          `L ${cx} ${y2}`,
+        ].join(" ");
+      }
+      connectors.push({ key, d, highlighted: highlightedLinks.has(key) });
     }
   }
 
