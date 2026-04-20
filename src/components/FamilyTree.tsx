@@ -326,25 +326,45 @@ export function FamilyTree({ nodes, highlightId }: Props) {
             className="absolute inset-0 pointer-events-none"
             style={{ overflow: "visible" }}
           >
-            {connectors.map((c, i) => (
-              <path
-                key={c.key}
-                d={c.d}
-                stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "#A2966B"}
-                strokeWidth={c.highlighted ? 1.5 : 0.75}
-                strokeLinecap="round"
-                fill="none"
-                pathLength={1}
-                strokeDasharray={1}
-                strokeDashoffset={1}
-                style={{
-                  animation: `branch-draw 0.7s cubic-bezier(0.65,0,0.35,1) forwards`,
-                  animationDelay: `${0.05 + i * 0.04}s`,
-                  transition: "stroke 0.3s ease, stroke-width 0.3s ease",
-                  filter: c.highlighted ? "drop-shadow(0 0 6px var(--branch-soft))" : undefined,
-                }}
-              />
-            ))}
+            {connectors.map((c, i) => {
+              if (c.dashed) {
+                return (
+                  <path
+                    key={c.key}
+                    d={c.d}
+                    stroke="#A2966B"
+                    strokeWidth={0.75}
+                    strokeLinecap="round"
+                    strokeDasharray="3 4"
+                    fill="none"
+                    style={{
+                      opacity: 0,
+                      animation: `wed-fade 0.6s ease-out forwards`,
+                      animationDelay: `${0.4 + i * 0.04}s`,
+                    }}
+                  />
+                );
+              }
+              return (
+                <path
+                  key={c.key}
+                  d={c.d}
+                  stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "#A2966B"}
+                  strokeWidth={c.highlighted ? 1.5 : 0.75}
+                  strokeLinecap="round"
+                  fill="none"
+                  pathLength={1}
+                  strokeDasharray={1}
+                  strokeDashoffset={1}
+                  style={{
+                    animation: `branch-draw 0.7s cubic-bezier(0.65,0,0.35,1) forwards`,
+                    animationDelay: `${0.05 + i * 0.04}s`,
+                    transition: "stroke 0.3s ease, stroke-width 0.3s ease",
+                    filter: c.highlighted ? "drop-shadow(0 0 6px var(--branch-soft))" : undefined,
+                  }}
+                />
+              );
+            })}
           </svg>
 
           {/* Cards */}
