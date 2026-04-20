@@ -320,7 +320,7 @@ export function FamilyTree({ nodes, highlightId }: Props) {
           style={{
             width: totalW,
             height: totalH,
-            transform: `scale(${scale})`,
+            transform: `scale(${effectiveScale})`,
             transformOrigin: "top center",
             transition: "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
             position: "relative",
