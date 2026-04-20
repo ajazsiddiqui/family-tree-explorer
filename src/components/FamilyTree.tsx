@@ -200,34 +200,21 @@ export function FamilyTree({ nodes, highlightId }: Props) {
     };
   }, [totalW, totalH, expanded]);
 
-  // Build connector path data
+  // Build connector path data — one smooth S-curve per parent→child link
   const connectors: { d: string; key: string }[] = [];
   for (const p of positions) {
     if (p.node.children.length === 0) continue;
     const h = nodeHeight(p.node, isExpanded);
-    const parentBottomY = p.y + h;
-    const busY = p.y + h + ROW_GAP / 2;
-    const childTopY = p.y + h + ROW_GAP;
-
-    // trunk down from parent center to bus
-    connectors.push({
-      key: `trunk-${p.node.member.id}`,
-      d: `M ${p.x} ${parentBottomY} L ${p.x} ${busY}`,
-    });
-    // horizontal bus
-    const minX = Math.min(...p.childCenters);
-    const maxX = Math.max(...p.childCenters);
-    if (p.childCenters.length > 1) {
-      connectors.push({
-        key: `bus-${p.node.member.id}`,
-        d: `M ${minX} ${busY} L ${maxX} ${busY}`,
-      });
-    }
-    // drops to each child
+    const y1 = p.y + h;
+    const y2 = p.y + h + ROW_GAP;
+    const dy = y2 - y1;
     for (let i = 0; i < p.childCenters.length; i++) {
+      const cx = p.childCenters[i];
+      const c1y = y1 + dy * 0.55;
+      const c2y = y2 - dy * 0.55;
       connectors.push({
-        key: `drop-${p.node.member.id}-${i}`,
-        d: `M ${p.childCenters[i]} ${busY} L ${p.childCenters[i]} ${childTopY}`,
+        key: `link-${p.node.member.id}-${i}`,
+        d: `M ${p.x} ${y1} C ${p.x} ${c1y}, ${cx} ${c2y}, ${cx} ${y2}`,
       });
     }
   }
