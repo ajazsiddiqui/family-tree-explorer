@@ -157,6 +157,13 @@ export function FamilyTree({ nodes, highlightId }: Props) {
   );
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [manualScale, setManualScale] = useState<number | null>(null);
+
+  const zoomIn = () => setManualScale((s) => Math.min(2, (s ?? scale) + 0.1));
+  const zoomOut = () => setManualScale((s) => Math.max(0.3, (s ?? scale) - 0.1));
+  const zoomReset = () => setManualScale(null);
+
+  const effectiveScale = manualScale ?? scale;
 
   const toggle = (id: string) =>
     setExpanded((s) => {
@@ -313,7 +320,7 @@ export function FamilyTree({ nodes, highlightId }: Props) {
           style={{
             width: totalW,
             height: totalH,
-            transform: `scale(${scale})`,
+            transform: `scale(${effectiveScale})`,
             transformOrigin: "top center",
             transition: "transform 0.4s cubic-bezier(0.4,0,0.2,1)",
             position: "relative",
@@ -413,8 +420,28 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         </div>
       </div>
 
-      <div className="absolute bottom-3 right-4 text-[10px] text-muted-foreground bg-card/80 backdrop-blur rounded-full px-2.5 py-1 border border-border">
-        {Math.round(scale * 100)}% · auto-fit
+      <div className="absolute bottom-3 right-4 flex items-center gap-1 bg-card/90 backdrop-blur rounded-full p-1 border border-border shadow-sm">
+        <button
+          onClick={zoomOut}
+          aria-label="Zoom out"
+          className="w-7 h-7 rounded-full hover:bg-muted text-foreground/70 hover:text-foreground flex items-center justify-center text-base font-medium transition-colors"
+        >
+          −
+        </button>
+        <button
+          onClick={zoomReset}
+          aria-label="Reset zoom"
+          className="px-2 h-7 rounded-full hover:bg-muted text-[10px] text-muted-foreground hover:text-foreground transition-colors min-w-[64px]"
+        >
+          {Math.round(effectiveScale * 100)}%{manualScale === null ? " · fit" : ""}
+        </button>
+        <button
+          onClick={zoomIn}
+          aria-label="Zoom in"
+          className="w-7 h-7 rounded-full hover:bg-muted text-foreground/70 hover:text-foreground flex items-center justify-center text-base font-medium transition-colors"
+        >
+          +
+        </button>
       </div>
     </div>
   );
