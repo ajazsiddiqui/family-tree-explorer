@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { familyName, familyMotto } from "@/data/family";
 import { buildForest } from "@/lib/family-tree";
@@ -35,6 +35,7 @@ function Index() {
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const navigate = useNavigate();
 
   const generations = new Set(
     family.map((m) => {
@@ -82,7 +83,7 @@ function Index() {
     familyStore.upsert({ id, name, gender: "other", alive: true });
     setNewName("");
     setAdding(false);
-    window.location.href = `/member/${id}`;
+    navigate({ to: "/member/$id", params: { id } });
   };
 
   const doReset = () => {
