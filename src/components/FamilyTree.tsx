@@ -78,7 +78,7 @@ function NodeView({
         onAnyToggle={onAnyToggle}
       />
       {node.children.length > 0 && (
-        <ul className="tree-children flex justify-center mt-[88px] relative">
+        <ul className="tree-children flex justify-center mt-[120px] relative">
           {node.children.map((c, i) => (
             <NodeView
               key={c.member.id}
