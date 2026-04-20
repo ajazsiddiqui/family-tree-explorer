@@ -12,7 +12,7 @@ const CARD_H = 150; // base card height (collapsed)
 const CARD_H_EXPANDED = 250; // expanded card height (with details + button)
 const COUPLE_GAP = 14; // includes heart space
 const SIBLING_GAP = 18;
-const ROW_GAP = 110; // vertical space between generations (gap for connectors)
+const ROW_GAP = 150; // vertical space between generations (gap for connectors)
 
 interface PositionedNode {
   node: TreeNode;
@@ -281,8 +281,8 @@ export function FamilyTree({ nodes, highlightId }: Props) {
               <path
                 key={c.key}
                 d={c.d}
-                stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "var(--branch)"}
-                strokeWidth={c.highlighted ? 4 : 2.5}
+                stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "oklch(0.82 0.01 80)"}
+                strokeWidth={c.highlighted ? 4 : 2}
                 strokeLinecap="round"
                 fill="none"
                 pathLength={1}
