@@ -226,41 +226,73 @@ export function FamilyTree({ nodes, highlightId }: Props) {
     }
   }
 
-  // Build connector path data — orthogonal trunk→bus→drop with rounded corners
-  const connectors: { d: string; key: string; highlighted: boolean }[] = [];
+  const drawElbow = (x1: number, y1: number, x2: number, y2: number) => {
+    const busY = (y1 + y2) / 2;
+    const dx = x2 - x1;
+    const adx = Math.abs(dx);
+    const r = Math.min(CORNER_R, adx / 2, busY - y1, y2 - busY);
+    if (adx < 1) return `M ${x1} ${y1} L ${x2} ${y2}`;
+    const sx = dx > 0 ? 1 : -1;
+    return [
+      `M ${x1} ${y1}`,
+      `L ${x1} ${busY - r}`,
+      `Q ${x1} ${busY} ${x1 + sx * r} ${busY}`,
+      `L ${x2 - sx * r} ${busY}`,
+      `Q ${x2} ${busY} ${x2} ${busY + r}`,
+      `L ${x2} ${y2}`,
+    ].join(" ");
+  };
+
+  const connectors: {
+    d: string;
+    key: string;
+    highlighted: boolean;
+    dashed?: boolean;
+  }[] = [];
+
   for (const p of positions) {
     if (p.node.children.length === 0) continue;
     const h = nodeHeight(p.node, isExpanded);
-    const y1 = p.y + h; // parent bottom
-    const busY = p.y + h + ROW_GAP / 2;
-    const y2 = p.y + h + ROW_GAP; // child top
+    const y1 = p.y + h;
+    const y2 = p.y + h + ROW_GAP;
     for (let i = 0; i < p.childCenters.length; i++) {
       const cx = p.childCenters[i];
       const key = `link-${p.node.member.id}-${i}`;
-      const dx = cx - p.x;
-      const adx = Math.abs(dx);
-      // limit radius so it never exceeds available space
-      const r = Math.min(CORNER_R, adx / 2, (busY - y1), (y2 - busY));
-      let d: string;
-      if (adx < 1) {
-        // straight line, no corners needed
-        d = `M ${p.x} ${y1} L ${cx} ${y2}`;
-      } else {
-        const sx = dx > 0 ? 1 : -1; // horizontal direction
-        // path: down to (busY - r), arc into horizontal, across to near cx, arc down, then down to y2
-        d = [
-          `M ${p.x} ${y1}`,
-          `L ${p.x} ${busY - r}`,
-          // first quarter arc: turn from down → horizontal toward child
-          `Q ${p.x} ${busY} ${p.x + sx * r} ${busY}`,
-          `L ${cx - sx * r} ${busY}`,
-          // second quarter arc: turn from horizontal → down
-          `Q ${cx} ${busY} ${cx} ${busY + r}`,
-          `L ${cx} ${y2}`,
-        ].join(" ");
-      }
-      connectors.push({ key, d, highlighted: highlightedLinks.has(key) });
+      connectors.push({
+        key,
+        d: drawElbow(p.x, y1, cx, y2),
+        highlighted: highlightedLinks.has(key),
+      });
     }
+  }
+
+  // Cross-branch "married into" dashed links: from spouse's original parent → spouse card top.
+  const memberToPos = new Map<string, PositionedNode>();
+  for (const p of positions) {
+    memberToPos.set(p.node.member.id, p);
+    if (p.node.spouse) memberToPos.set(p.node.spouse.id, p);
+  }
+  for (const p of positions) {
+    if (!p.node.spouse) continue;
+    const spouse = p.node.spouse;
+    const origParentId = spouse.fatherId ?? spouse.motherId;
+    if (!origParentId) continue;
+    const parentPos = memberToPos.get(origParentId);
+    if (!parentPos) continue;
+    const ownParent = parentLink.get(p.node.member.id)?.parentId;
+    if (ownParent === parentPos.node.member.id) continue;
+
+    const ph = nodeHeight(parentPos.node, isExpanded);
+    const fromX = parentPos.x;
+    const fromY = parentPos.y + ph;
+    const spouseCenterX = p.x + (CARD_W + COUPLE_GAP) / 2;
+    const toY = p.y;
+    connectors.push({
+      key: `wed-${spouse.id}`,
+      d: drawElbow(fromX, fromY, spouseCenterX, toY),
+      highlighted: false,
+      dashed: true,
+    });
   }
 
   return (
@@ -294,25 +326,45 @@ export function FamilyTree({ nodes, highlightId }: Props) {
             className="absolute inset-0 pointer-events-none"
             style={{ overflow: "visible" }}
           >
-            {connectors.map((c, i) => (
-              <path
-                key={c.key}
-                d={c.d}
-                stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "#A2966B"}
-                strokeWidth={c.highlighted ? 1.5 : 0.75}
-                strokeLinecap="round"
-                fill="none"
-                pathLength={1}
-                strokeDasharray={1}
-                strokeDashoffset={1}
-                style={{
-                  animation: `branch-draw 0.7s cubic-bezier(0.65,0,0.35,1) forwards`,
-                  animationDelay: `${0.05 + i * 0.04}s`,
-                  transition: "stroke 0.3s ease, stroke-width 0.3s ease",
-                  filter: c.highlighted ? "drop-shadow(0 0 6px var(--branch-soft))" : undefined,
-                }}
-              />
-            ))}
+            {connectors.map((c, i) => {
+              if (c.dashed) {
+                return (
+                  <path
+                    key={c.key}
+                    d={c.d}
+                    stroke="#A2966B"
+                    strokeWidth={0.75}
+                    strokeLinecap="round"
+                    strokeDasharray="3 4"
+                    fill="none"
+                    style={{
+                      opacity: 0,
+                      animation: `wed-fade 0.6s ease-out forwards`,
+                      animationDelay: `${0.4 + i * 0.04}s`,
+                    }}
+                  />
+                );
+              }
+              return (
+                <path
+                  key={c.key}
+                  d={c.d}
+                  stroke={c.highlighted ? "var(--branch-strong, oklch(0.62 0.18 35))" : "#A2966B"}
+                  strokeWidth={c.highlighted ? 1.5 : 0.75}
+                  strokeLinecap="round"
+                  fill="none"
+                  pathLength={1}
+                  strokeDasharray={1}
+                  strokeDashoffset={1}
+                  style={{
+                    animation: `branch-draw 0.7s cubic-bezier(0.65,0,0.35,1) forwards`,
+                    animationDelay: `${0.05 + i * 0.04}s`,
+                    transition: "stroke 0.3s ease, stroke-width 0.3s ease",
+                    filter: c.highlighted ? "drop-shadow(0 0 6px var(--branch-soft))" : undefined,
+                  }}
+                />
+              );
+            })}
           </svg>
 
           {/* Cards */}
