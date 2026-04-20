@@ -7,7 +7,7 @@ interface Props {
   highlightId?: string;
 }
 
-const CARD_W = 120;
+const CARD_W = 96;
 const CARD_H = 150; // base card height (collapsed)
 const CARD_H_EXPANDED = 250; // expanded card height (with details + button)
 const COUPLE_GAP = 14; // includes heart space
