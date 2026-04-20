@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { familyName, familyMotto } from "@/data/family";
 import { buildForest } from "@/lib/family-tree";
@@ -32,6 +32,10 @@ function Index() {
   const total = family.length;
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [confirmingReset, setConfirmingReset] = useState(false);
+  const navigate = useNavigate();
 
   const generations = new Set(
     family.map((m) => {
@@ -57,6 +61,8 @@ function Index() {
     a.download = `family-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    setMsg("Exported family.json");
+    setTimeout(() => setMsg(null), 3000);
   };
 
   const handleImport = (file: File) => {
@@ -69,18 +75,22 @@ function Index() {
     reader.readAsText(file);
   };
 
-  const handleReset = () => {
-    if (confirm("Reset to the seed family data? Your edits will be lost.")) {
-      familyStore.reset();
-    }
+  const submitAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    const id = newId("m");
+    familyStore.upsert({ id, name, gender: "other", alive: true });
+    setNewName("");
+    setAdding(false);
+    navigate({ to: "/member/$id", params: { id } });
   };
 
-  const handleAddRoot = () => {
-    const name = prompt("New member name?");
-    if (!name?.trim()) return;
-    const id = newId("m");
-    familyStore.upsert({ id, name: name.trim(), gender: "other", alive: true });
-    window.location.href = `/member/${id}`;
+  const doReset = () => {
+    familyStore.reset();
+    setConfirmingReset(false);
+    setMsg("Reset to seed data.");
+    setTimeout(() => setMsg(null), 3000);
   };
 
   return (
@@ -96,8 +106,9 @@ function Index() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleAddRoot}
+              onClick={() => setAdding((v) => !v)}
               className="text-xs rounded-full bg-primary text-primary-foreground px-3 py-1.5 hover:opacity-90 transition"
+              data-testid="add-member-toggle"
             >
               + Add member
             </button>
@@ -125,13 +136,41 @@ function Index() {
               }}
             />
             <button
-              onClick={handleReset}
+              onClick={() => setConfirmingReset(true)}
               className="text-xs rounded-full border border-border px-3 py-1.5 hover:bg-muted transition text-muted-foreground"
             >
               Reset
             </button>
           </div>
         </div>
+        {adding && (
+          <div className="max-w-7xl mx-auto px-6 pb-3">
+            <form onSubmit={submitAdd} className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="New member name"
+                className="flex-1 max-w-sm rounded-full border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                maxLength={120}
+                data-testid="new-member-name"
+              />
+              <button type="submit" className="text-xs rounded-full bg-primary text-primary-foreground px-4 py-2 hover:opacity-90 transition">Create</button>
+              <button type="button" onClick={() => { setAdding(false); setNewName(""); }} className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition">Cancel</button>
+            </form>
+          </div>
+        )}
+        {confirmingReset && (
+          <div className="max-w-7xl mx-auto px-6 pb-3">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 px-4 py-2">
+              <span className="text-sm">Reset to seed data? Your edits will be lost.</span>
+              <div className="flex items-center gap-2">
+                <button onClick={doReset} className="text-xs rounded-full bg-destructive text-destructive-foreground px-4 py-2 hover:opacity-90 transition">Confirm reset</button>
+                <button onClick={() => setConfirmingReset(false)} className="text-xs rounded-full border border-border px-4 py-2 hover:bg-muted transition">Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
         {msg && (
           <div className="max-w-7xl mx-auto px-6 pb-2 text-xs text-muted-foreground">
             {msg}
