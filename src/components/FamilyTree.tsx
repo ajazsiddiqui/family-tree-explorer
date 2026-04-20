@@ -177,10 +177,10 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children::before {
           content: "";
           position: absolute;
-          top: -40px;
+          top: -56px;
           left: 50%;
           width: 2.5px;
-          height: 40px;
+          height: 56px;
           background: var(--branch);
           transform: translateX(-50%);
           border-radius: 4px;
@@ -189,7 +189,7 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children > li::before {
           content: "";
           position: absolute;
-          top: -24px;
+          top: -32px;
           left: 0;
           right: 0;
           height: 2.5px;
@@ -214,10 +214,10 @@ export function FamilyTree({ nodes, highlightId }: Props) {
         .tree-children > li::after {
           content: "";
           position: absolute;
-          top: -24px;
+          top: -32px;
           left: 50%;
           width: 2.5px;
-          height: 24px;
+          height: 32px;
           background: var(--branch);
           transform: translateX(-50%);
           border-radius: 4px;
