@@ -93,9 +93,21 @@ function subtreeWidth(node: TreeNode): number {
   return Math.max(pairWidth(node), w);
 }
 
-function layoutAt(node: TreeNode, x: number, y: number): PositionedNode {
+function nodeHeight(node: TreeNode, isExpanded: (id: string) => boolean): number {
+  const a = isExpanded(node.member.id);
+  const b = node.spouse ? isExpanded(node.spouse.id) : false;
+  return a || b ? CARD_H_EXPANDED : CARD_H;
+}
+
+function layoutAt(
+  node: TreeNode,
+  x: number,
+  y: number,
+  isExpanded: (id: string) => boolean,
+): PositionedNode {
   const ownW = pairWidth(node);
   const subW = subtreeWidth(node);
+  const h = nodeHeight(node, isExpanded);
 
   if (node.children.length === 0) {
     return {
@@ -108,19 +120,16 @@ function layoutAt(node: TreeNode, x: number, y: number): PositionedNode {
     };
   }
 
-  // children laid out from x, stretched across subW
-  const childY = y + 180 + ROW_GAP;
-  let cursor = x + Math.max(0, (ownW - subW) / 2); // if own is wider than children
-  // but we want children to span exactly subW starting at x
+  const childY = y + h + ROW_GAP;
   let totalChildW = 0;
   for (const c of node.children) totalChildW += subtreeWidth(c) + SIBLING_GAP;
   totalChildW -= SIBLING_GAP;
   const startX = x + (subW - totalChildW) / 2;
-  cursor = startX;
+  let cursor = startX;
   const centers: number[] = [];
   for (const c of node.children) {
     const cw = subtreeWidth(c);
-    const cPos = layoutAt(c, cursor, childY);
+    const cPos = layoutAt(c, cursor, childY, isExpanded);
     centers.push(cPos.pairCenter);
     cursor += cw + SIBLING_GAP;
   }
@@ -135,9 +144,14 @@ function layoutAt(node: TreeNode, x: number, y: number): PositionedNode {
   };
 }
 
-function collectAll(p: PositionedNode, acc: PositionedNode[] = []): PositionedNode[] {
+function collectAll(
+  p: PositionedNode,
+  isExpanded: (id: string) => boolean,
+  acc: PositionedNode[] = [],
+): PositionedNode[] {
   acc.push(p);
-  const childY = p.y + 180 + ROW_GAP;
+  const h = nodeHeight(p.node, isExpanded);
+  const childY = p.y + h + ROW_GAP;
   let totalChildW = 0;
   for (const c of p.node.children) totalChildW += subtreeWidth(c) + SIBLING_GAP;
   totalChildW -= SIBLING_GAP;
@@ -145,8 +159,8 @@ function collectAll(p: PositionedNode, acc: PositionedNode[] = []): PositionedNo
   let cursor = startX;
   for (const c of p.node.children) {
     const cw = subtreeWidth(c);
-    const childPos = layoutAt(c, cursor, childY);
-    collectAll(childPos, acc);
+    const childPos = layoutAt(c, cursor, childY, isExpanded);
+    collectAll(childPos, isExpanded, acc);
     cursor += cw + SIBLING_GAP;
   }
   return acc;
